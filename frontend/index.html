@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #202b45;
+        }
+        header {
+            background: #172554;
+            color: white;
+            padding: 24px 5%;
+        }
+        header h1 { margin: 0 0 8px; }
+        main { padding: 24px 5%; }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px;
+        }
+        .card, .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px #17255410;
+        }
+        .card h3 { color: #64748b; font-size: 14px; }
+        .metric { font-size: 26px; font-weight: bold; }
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        th { background: #f8fafc; }
+        .table-wrap { overflow-x: auto; }
+        #status { margin: 16px 0; color: #475569; }
+        
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.filter-bar div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.filter-bar input,
+.filter-bar select {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+    </style>
+</head>
+<body>
+<header>
+    <h1>Customer Segmentation Dashboard</h1>
+    <p>Understand customer behaviour using RFM analysis and K-Means clustering.</p>
+</header>
+
+<main>
+    <p id="status">Loading customer data...</p>
+
+    <section class="cards">
+        <div class="card">
+            <h3>Total Customers</h3>
+            <div class="metric" id="customers">—</div>
+        </div>
+        <div class="card">
+            <h3>Total Customer Spending</h3>
+            <div class="metric" id="revenue">—</div>
+        </div>
+        <div class="card">
+            <h3>Average Spending per Customer</h3>
+            <div class="metric" id="average">—</div>
+        </div>
+        <div class="card">
+            <h3>Average Purchase Frequency</h3>
+            <div class="metric" id="frequency">—</div>
+        </div>
+    </section>
+
+    <section class="charts">
+        <div class="panel">
+            <h3>Customers in Each Segment</h3>
+            <div id="segmentChart"></div>
+        </div>
+        <div class="panel">
+            <h3>Segment Spending</h3>
+            <div id="spendingChart"></div>
+        </div>
+    </section>
+
+    <section class="panel" style="margin-top:20px">
+        
+<div class="filter-bar">
+    <div>
+        <label for="customerSearch">Search Customer ID</label>
+        <input
+            type="text"
+            id="customerSearch"
+            placeholder="Enter Customer ID..."
+        >
+    </div>
+
+    <div>
+        <label for="segmentFilter">Filter by Segment</label>
+        <select id="segmentFilter">
+            <option value="All">All Segments</option>
+            <option value="High Value">High Value</option>
+            <option value="Loyal Customers">Loyal Customers</option>
+            <option value="Regular Customers">Regular Customers</option>
+            <option value="Needs Attention">Needs Attention</option>
+        </select>
+    </div>
+</div>
+
+        <h3>Top Customers by Spending</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Recency (days)</th>
+                        <th>Invoices</th>
+                        <th>Total Spending</th>
+                        <th>Cluster</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTable"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    
+let allCustomers = [];
+
+function displayCustomers() {
+    const searchText = document
+        .getElementById("customerSearch")
+        .value.trim();
+
+    const selectedSegment = document
+        .getElementById("segmentFilter")
+        .value;
+
+    const filteredCustomers = allCustomers.filter(c => {
+        const matchesID = String(c.CustomerID).includes(searchText);
+
+        const matchesSegment =
+            selectedSegment === "All" ||
+            c.Segment === selectedSegment;
+
+        return matchesID && matchesSegment;
+    });
+
+    document.getElementById("customerTable").innerHTML =
+        filteredCustomers.map(c => `
+            <tr>
+                <td>${c.CustomerID}</td>
+                <td>${c.Recency}</td>
+                <td>${c.Frequency}</td>
+                <td>£${Number(c.Monetary).toLocaleString(
+                    "en-GB",
+                    { maximumFractionDigits: 2 }
+                )}</td>
+                <td>${c.Segment}</td>
+            </tr>
+        `).join("");
+
+    if (filteredCustomers.length === 0) {
+        document.getElementById("customerTable").innerHTML =
+            '<tr><td colspan="5">No matching customers found.</td></tr>';
+    }
+}
+
+async function loadDashboard() {
+    const status = document.getElementById("status");
+
+    try {
+        const [summaryResponse, segmentsResponse, customersResponse] =
+            await Promise.all([
+                fetch("/api/summary"),
+                fetch("/api/segments"),
+                fetch("/api/customers")
+            ]);
+
+        if (!summaryResponse.ok || !segmentsResponse.ok ||
+            !customersResponse.ok) {
+            throw new Error("The backend returned an error.");
+        }
+
+        const summary = await summaryResponse.json();
+        const segmentData = (await segmentsResponse.json()).segments;
+        const customerData = (await customersResponse.json()).customers;
+        allCustomers = customerData;
+
+        document.getElementById("customers").textContent =
+            summary.total_customers.toLocaleString();
+
+        document.getElementById("revenue").textContent =
+            "£" + summary.total_revenue.toLocaleString(
+                "en-GB", { maximumFractionDigits: 2 }
+            );
+
+        document.getElementById("average").textContent =
+            "£" + summary.average_spending.toLocaleString(
+                "en-GB", { maximumFractionDigits: 2 }
+            );
+
+        document.getElementById("frequency").textContent =
+            summary.average_frequency.toFixed(2);
+
+        Plotly.newPlot("segmentChart", [{
+            type: "bar",
+            x: segmentData.map(s => "Cluster " + s.Cluster),
+            y: segmentData.map(s => s.Customers),
+            marker: { color: "#4f46e5" }
+        }], {
+            margin: { t: 20, b: 50, l: 45, r: 15 },
+            yaxis: { title: "Customers" }
+        }, { responsive: true });
+
+        Plotly.newPlot("spendingChart", [{
+            type: "pie",
+            labels: segmentData.map(s => "Cluster " + s.Cluster),
+            values: segmentData.map(s => s.Total_Revenue),
+            hole: 0.45
+        }], {
+            margin: { t: 20, b: 20, l: 20, r: 20 }
+        }, { responsive: true });
+
+        displayCustomers();
+
+        status.textContent = "Dashboard loaded successfully.";
+    } catch (error) {
+        status.textContent =
+            "Could not load dashboard data. Check that the Flask backend is running and inspect its terminal for errors.";
+        console.error(error);
+    }
+}
+
+document.getElementById("customerSearch")
+    .addEventListener("input", displayCustomers);
+
+document.getElementById("segmentFilter")
+    .addEventListener("change", displayCustomers);
+
+loadDashboard();
+</script>
+</body>
+</html>

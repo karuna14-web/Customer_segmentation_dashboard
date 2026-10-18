@@ -1,0 +1,10 @@
+/online\+retail - Copy.zip
+
+# Large dataset files
+/data/processed/cleaned_data.csv
+/data/raw/Online Retail.xlsx
+/data/raw/online_retail.csv
+
+# ZIP archive inside data folder
+/data/customer_segmentation_dashboard.zip
+
