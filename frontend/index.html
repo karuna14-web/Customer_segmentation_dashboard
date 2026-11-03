@@ -135,6 +135,45 @@ tbody tr {
     }
 }
 
+#recommendations {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.recommendation-card {
+    background: white;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #4f46e5;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.09);
+}
+
+.recommendation-card h3 {
+    margin-top: 0;
+    color: #3730a3;
+}
+
+.recommendation-card p {
+    line-height: 1.6;
+    color: #374151;
+}
+
+@media (max-width: 650px) {
+    #recommendations {
+        grid-template-columns: 1fr;
+    }
+}
+
+
     </style>
 </head>
 <body>
@@ -165,16 +204,33 @@ tbody tr {
         </div>
     </section>
 
-    <section class="charts">
-        <div class="panel">
-            <h3>Customers in Each Segment</h3>
-            <div id="segmentChart"></div>
-        </div>
-        <div class="panel">
-            <h3>Segment Spending</h3>
-            <div id="spendingChart"></div>
-        </div>
-    </section>
+   
+
+<section class="charts">
+    <div class="panel">
+        <h3>Customers in Each Segment</h3>
+        <div id="segmentChart"></div>
+    </div>
+
+    <div class="panel">
+        <h3>Segment Spending</h3>
+        <div id="spendingChart"></div>
+    </div>
+</section>
+
+
+<section class="panel" style="margin-top: 20px">
+    <h2>Customer Segment Overview</h2>
+    <div id="segmentDescriptions"></div>
+</section>
+
+<section class="panel" style="margin-top: 20px">
+    <h2>Customer Segment Recommendations</h2>
+    <div id="recommendations"></div>
+</section>
+
+
+
 
     <section class="panel" style="margin-top:20px">
         
@@ -248,9 +304,12 @@ function displayCustomers() {
                 <td>${c.Recency}</td>
                 <td>${c.Frequency}</td>
                 <td>£${Number(c.Monetary).toLocaleString(
-                    "en-GB",
-                    { maximumFractionDigits: 2 }
-                )}</td>
+    "en-GB",
+    {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }
+)}</td>
                 <td>${c.Segment}</td>
             </tr>
         `).join("");
@@ -281,6 +340,37 @@ async function loadDashboard() {
         const segmentData = (await segmentsResponse.json()).segments;
         const customerData = (await customersResponse.json()).customers;
         allCustomers = customerData;
+        
+const descriptions = {
+    "High Value": "Customers who purchase frequently and generate high revenue.",
+    "Loyal Customers": "Customers who regularly purchase from the business.",
+    "Regular Customers": "Customers with moderate purchasing activity.",
+    "Needs Attention": "Customers who have not purchased recently."
+};
+
+document.getElementById("segmentDescriptions").innerHTML =
+    segmentData.map(s => `
+        <div class="recommendation-card">
+            <h3>${s.Segment}</h3>
+            <p>${descriptions[s.Segment]}</p>
+            
+<p><strong>Total Customers:</strong> ${s.Customers.toLocaleString()}</p>
+<p><strong>Customer Share:</strong> ${((s.Customers / summary.total_customers) * 100).toFixed(2)}%</p>
+
+        </div>
+    `).join("");
+
+        
+document.getElementById("recommendations").innerHTML =
+    segmentData.map(s => `
+        <div class="panel">
+            <h3>${s.Segment}</h3>
+            <p><strong>Customers:</strong> ${s.Customers.toLocaleString()}</p>
+            <p><strong>Average spending:</strong> £${Number(s.Average_Spending).toLocaleString("en-GB", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Recommendation:</strong> ${s.Recommendation}</p>
+        </div>
+    `).join("");
+
 
         document.getElementById("customers").textContent =
             summary.total_customers.toLocaleString();
@@ -300,20 +390,30 @@ async function loadDashboard() {
 
         Plotly.newPlot("segmentChart", [{
             type: "bar",
-            x: segmentData.map(s => "Cluster " + s.Cluster),
-            y: segmentData.map(s => s.Customers),
-            marker: { color: "#4f46e5" }
+            x: segmentData.map(s => s.Segment),
+            
+y: segmentData.map(s => s.Customers),
+text: segmentData.map(s => s.Customers.toLocaleString()),
+textposition: "outside",
+marker: { color: "#4f46e5" }
+
         }], {
             margin: { t: 20, b: 50, l: 45, r: 15 },
             yaxis: { title: "Customers" }
         }, { responsive: true });
 
-        Plotly.newPlot("spendingChart", [{
-            type: "pie",
-            labels: segmentData.map(s => "Cluster " + s.Cluster),
-            values: segmentData.map(s => s.Total_Revenue),
-            hole: 0.45
-        }], {
+Plotly.newPlot("spendingChart", [{
+    type: "pie",
+    labels: segmentData.map(s => s.Segment),
+    values: segmentData.map(s => s.Total_Revenue),
+    hole: 0.45,
+    textinfo: "percent",
+    hovertemplate:
+        "<b>%{label}</b><br>" +
+        "Revenue: £%{value:,.2f}<br>" +
+        "Share: %{percent}<extra></extra>"
+}], {
+
             margin: { t: 20, b: 20, l: 20, r: 20 }
         }, { responsive: true });
 

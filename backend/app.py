@@ -122,6 +122,14 @@ def segments():
         Total_Revenue=("Monetary", "sum"),
         Average_Spending=("Monetary", "mean")
     ).reset_index()
+    recommendations = {
+    "High Value": "Offer VIP rewards and personalized benefits.",
+    "Loyal Customers": "Reward repeat purchases and encourage referrals.",
+    "Needs Attention": "Send reactivation offers to encourage another purchase.",
+    "Regular Customers": "Use loyalty points and targeted offers to encourage repeat purchases."
+}
+
+    result["Recommendation"] = result["Segment"].map(recommendations)
 
     return jsonify({
         "segments": result.round(2).to_dict(orient="records")
