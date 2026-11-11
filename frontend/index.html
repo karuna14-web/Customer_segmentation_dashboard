@@ -14,7 +14,7 @@
     margin: 0;
     padding: 24px;
 }
-        
+
         header {
             background: #172554;
             color: white;
@@ -77,7 +77,7 @@ tbody tr {
 }
         .table-wrap { overflow-x: auto; }
         #status { margin: 16px 0; color: #475569; }
-        
+
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -174,18 +174,213 @@ tbody tr {
 }
 
 
-    </style>
+
+/* ===== Sidebar and five-page layout ===== */
+body {
+    margin: 0;
+    padding: 0;
+    background: #f4f7fb;
+}
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 245px;
+    flex-shrink: 0;
+    background: #172554;
+    color: white;
+    padding: 25px 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.sidebar-brand {
+    padding: 5px 10px 28px;
+}
+
+.sidebar-brand h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.sidebar-brand p,
+.sidebar-footer p {
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.nav-item {
+    width: 100%;
+    border: 0;
+    border-radius: 9px;
+    padding: 13px 12px;
+    text-align: left;
+    color: #e2e8f0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.nav-item span {
+    margin-right: 9px;
+    color: #a5b4fc;
+    font-size: 11px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: #3730a3;
+    color: white;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 20px 10px 0;
+}
+
+.main-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.topbar {
+    background: white;
+    color: #172554;
+    padding: 24px 32px;
+    border-bottom: 1px solid #e8edf5;
+}
+
+.topbar h1 {
+    margin: 0 0 7px;
+    font-size: 25px;
+}
+
+.topbar p {
+    margin: 0;
+    color: #64748b;
+}
+
+.page-content {
+    padding: 28px 32px;
+}
+
+.page-heading {
+    color: #172554;
+    margin: 0 0 20px;
+}
+
+.app-page {
+    display: none;
+}
+
+.app-page.active {
+    display: block;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+@media (max-width: 800px) {
+    .app-shell {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .sidebar-brand {
+        padding: 5px 5px 12px;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .nav-item {
+        width: auto;
+        flex: 1 1 145px;
+    }
+
+    .sidebar-footer {
+        display: none;
+    }
+
+    .topbar {
+        padding: 20px;
+    }
+
+    .page-content {
+        padding: 20px;
+    }
+}
+
+</style>
 </head>
 <body>
-<header>
-    <h1>Customer Segmentation Dashboard</h1>
-    <p>Understand customer behaviour using RFM analysis and K-Means clustering.</p>
-</header>
 
-<main>
-    <p id="status">Loading customer data...</p>
+<div class="app-shell">
 
-    <section class="cards">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>Customer Insights</h2>
+            <p>Segmentation Dashboard</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" onclick="showPage('overview', this)">
+                <span>01</span> Overview
+            </button>
+            <button class="nav-item" onclick="showPage('segments', this)">
+                <span>02</span> Customer Segments
+            </button>
+            <button class="nav-item" onclick="showPage('explorer', this)">
+                <span>03</span> Customer Explorer
+            </button>
+            <button class="nav-item" onclick="showPage('analytics', this)">
+                <span>04</span> Analytics
+            </button>
+            <button class="nav-item" onclick="showPage('reports', this)">
+                <span>05</span> Reports
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <p>Powered by RFM & K-Means</p>
+        </div>
+    </aside>
+
+    <div class="main-area">
+        <header class="topbar">
+            <div>
+                <h1>Customer Segmentation Dashboard</h1>
+                <p>Understand customer behaviour using RFM analysis and K-Means clustering.</p>
+            </div>
+        </header>
+
+        <main class="page-content">
+            <p id="status">Loading customer data...</p>
+
+            <section id="page-overview" class="app-page active">
+                <h2 class="page-heading">Overview</h2>
+                <section class="cards">
         <div class="card">
             <h3>Total Customers</h3>
             <div class="metric" id="customers">—</div>
@@ -203,10 +398,7 @@ tbody tr {
             <div class="metric" id="frequency">—</div>
         </div>
     </section>
-
-   
-
-<section class="charts">
+                <section class="charts">
     <div class="panel">
         <h3>Customers in Each Segment</h3>
         <div id="segmentChart"></div>
@@ -217,23 +409,40 @@ tbody tr {
         <div id="spendingChart"></div>
     </div>
 </section>
+            </section>
 
-
-<section class="panel" style="margin-top: 20px">
+            <section id="page-segments" class="app-page">
+                <h2 class="page-heading">Customer Segments</h2>
+                <section class="panel" style="margin-top: 20px">
     <h2>Customer Segment Overview</h2>
     <div id="segmentDescriptions"></div>
 </section>
-
-<section class="panel" style="margin-top: 20px">
+                <section class="panel" style="margin-top: 20px">
     <h2>Customer Segment Recommendations</h2>
     <div id="recommendations"></div>
 </section>
+                <section class="panel" style="margin-top: 20px">
+    <h2>Interactive Segment Explorer</h2>
 
+    <div style="margin: 15px 0;">
+        <label for="explorerSegment"><strong>Select Customer Segment:</strong></label>
+        <select id="explorerSegment"
+                style="padding: 10px; margin-left: 10px; border-radius: 6px;">
+            <option value="High Value">High Value</option>
+            <option value="Loyal Customers">Loyal Customers</option>
+            <option value="Regular Customers">Regular Customers</option>
+            <option value="Needs Attention">Needs Attention</option>
+        </select>
+    </div>
 
+    <div id="segmentDetails"></div>
+</section>
+            </section>
 
+            <section id="page-explorer" class="app-page">
+                <h2 class="page-heading">Customer Explorer</h2>
+                <section class="panel" style="margin-top:20px">
 
-    <section class="panel" style="margin-top:20px">
-        
 <div class="filter-bar">
     <div>
         <label for="customerSearch">Search Customer ID</label>
@@ -256,7 +465,13 @@ tbody tr {
     </div>
 </div>
 
+
+
         <h3>Top Customers by Spending</h3>
+
+        <p style="color:#64748b; font-size:13px;">
+            Tip: Click any customer row to view their detailed profile below.
+        </p>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -271,12 +486,112 @@ tbody tr {
                 <tbody id="customerTable"></tbody>
             </table>
         </div>
+
+        <div id="pagination"
+             style="display:flex; justify-content:center;
+                    align-items:center; gap:15px; margin:18px 0;
+                    flex-wrap:wrap;">
+        </div>
+
+        <!-- Customer Profile Details -->
+        <div id="customerProfile"
+             class="recommendation-card"
+             style="margin-top:20px; display:none;">
+        </div>
+
     </section>
-</main>
+            </section>
+
+            <section id="page-analytics" class="app-page">
+                <h2 class="page-heading">Analytics</h2>
+
+                <section class="panel">
+                    <h2>Understanding RFM Analysis</h2>
+                    <p>RFM analysis helps understand customer purchasing behaviour using three measures:</p>
+
+                    <div class="analytics-grid">
+                        <div class="recommendation-card">
+                            <h3>Recency (R)</h3>
+                            <p>How recently a customer made a purchase. A lower recency value means a more recent purchase.</p>
+                        </div>
+
+                        <div class="recommendation-card">
+                            <h3>Frequency (F)</h3>
+                            <p>How many distinct invoices or purchases a customer has made.</p>
+                        </div>
+
+                        <div class="recommendation-card">
+                            <h3>Monetary (M)</h3>
+                            <p>The total amount spent by a customer.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>Clustering Method</h2>
+                    <p>The dashboard uses K-Means clustering with four clusters to group customers according to their RFM behaviour.</p>
+                    <p><strong>Workflow:</strong> Data preprocessing → RFM calculation → Feature scaling → K-Means clustering → Customer segments.</p>
+                </section>
+            </section>
+
+            <section id="page-reports" class="app-page">
+                <h2 class="page-heading">Reports</h2>
+
+                <section class="panel">
+                    <h2>Customer Report</h2>
+                    <p>Download a CSV report using the customers currently loaded in the dashboard.</p>
+                    <p>The report follows the active customer search and segment filters.</p>
+                    <div style="display:flex; justify-content:flex-end; margin:15px 0;">
+            <button
+                onclick="downloadCustomerReport()"
+                style="background:#2563eb; color:white; border:none;
+                       padding:10px 18px; border-radius:6px;
+                       cursor:pointer; font-weight:600;">
+                Download Customer Report (CSV)
+            </button>
+        </div>
+                </section>
+            </section>
+        </main>
+    </div>
+</div>
 
 <script>
-    
+
+function showPage(pageName, clickedButton) {
+    document.querySelectorAll(".app-page").forEach(page => {
+        page.classList.remove("active");
+    });
+
+    const selectedPage = document.getElementById("page-" + pageName);
+    if (selectedPage) {
+        selectedPage.classList.add("active");
+    }
+
+    document.querySelectorAll(".nav-item").forEach(button => {
+        button.classList.remove("active");
+    });
+
+    if (clickedButton) {
+        clickedButton.classList.add("active");
+    }
+
+    // Resize charts when their page becomes visible.
+    if (window.Plotly) {
+        ["segmentChart", "spendingChart"].forEach(chartID => {
+            const chart = document.getElementById(chartID);
+            if (chart && chart.data) {
+                Plotly.Plots.resize(chart);
+            }
+        });
+    }
+}
+
+
 let allCustomers = [];
+let filteredCustomers = [];
+let currentPage = 1;
+const customersPerPage = 10;
 
 function displayCustomers() {
     const searchText = document
@@ -287,7 +602,7 @@ function displayCustomers() {
         .getElementById("segmentFilter")
         .value;
 
-    const filteredCustomers = allCustomers.filter(c => {
+    filteredCustomers = allCustomers.filter(c => {
         const matchesID = String(c.CustomerID).includes(searchText);
 
         const matchesSegment =
@@ -297,27 +612,190 @@ function displayCustomers() {
         return matchesID && matchesSegment;
     });
 
-    document.getElementById("customerTable").innerHTML =
-        filteredCustomers.map(c => `
-            <tr>
-                <td>${c.CustomerID}</td>
-                <td>${c.Recency}</td>
-                <td>${c.Frequency}</td>
-                <td>£${Number(c.Monetary).toLocaleString(
-    "en-GB",
-    {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }
-)}</td>
-                <td>${c.Segment}</td>
-            </tr>
-        `).join("");
+    // Reset to page 1 after search or filter changes
+    currentPage = 1;
+    renderCustomerPage();
+}
+
+function renderCustomerPage() {
+    const table = document.getElementById("customerTable");
+    const pagination = document.getElementById("pagination");
+
+    const totalPages = Math.ceil(
+        filteredCustomers.length / customersPerPage
+    );
 
     if (filteredCustomers.length === 0) {
-        document.getElementById("customerTable").innerHTML =
+        table.innerHTML =
             '<tr><td colspan="5">No matching customers found.</td></tr>';
+        pagination.innerHTML = "";
+        return;
     }
+
+    const startIndex = (currentPage - 1) * customersPerPage;
+    const pageCustomers = filteredCustomers.slice(
+        startIndex,
+        startIndex + customersPerPage
+    );
+
+    table.innerHTML = pageCustomers.map(c => `
+        <tr
+            onclick="showCustomerProfile('${c.CustomerID}')"
+            style="cursor:pointer;"
+            title="Click to view customer profile">
+            <td>${c.CustomerID}</td>
+            <td>${c.Recency}</td>
+            <td>${c.Frequency}</td>
+            <td>£${Number(c.Monetary).toLocaleString(
+                "en-GB",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            )}</td>
+            <td>${c.Segment}</td>
+        </tr>
+    `).join("");
+
+    pagination.innerHTML = `
+        <button onclick="changeCustomerPage(-1)"
+            ${currentPage === 1 ? "disabled" : ""}
+            style="padding:8px 14px; border:1px solid #cbd5e1;
+                   border-radius:6px; cursor:pointer;">
+            Previous
+        </button>
+
+        <span style="font-weight:600;">
+            Page ${currentPage} of ${totalPages}
+        </span>
+
+        <button onclick="changeCustomerPage(1)"
+            ${currentPage === totalPages ? "disabled" : ""}
+            style="padding:8px 14px; border:1px solid #cbd5e1;
+                   border-radius:6px; cursor:pointer;">
+            Next
+        </button>
+    `;
+}
+
+function changeCustomerPage(direction) {
+    const totalPages = Math.ceil(
+        filteredCustomers.length / customersPerPage
+    );
+
+    currentPage += direction;
+    currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+    renderCustomerPage();
+
+    document.querySelector(".table-wrap").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+function showCustomerProfile(customerID) {
+    const customer = allCustomers.find(
+        c => String(c.CustomerID) === String(customerID)
+    );
+
+    const profile = document.getElementById("customerProfile");
+
+    if (!customer) {
+        profile.innerHTML = "<p>Customer details not found.</p>";
+        profile.style.display = "block";
+        return;
+    }
+
+    const marketingActions = {
+        "High Value": "Offer premium rewards and exclusive benefits to retain this customer.",
+        "Loyal Customers": "Encourage repeat purchases through loyalty points and membership rewards.",
+        "Regular Customers": "Provide personalized offers to increase purchase frequency and spending.",
+        "Needs Attention": "Send a re-engagement offer or special discount to encourage another purchase."
+    };
+
+    const behaviour = {
+        "High Value": "A high-spending customer who purchases frequently.",
+        "Loyal Customers": "A regular customer with strong purchasing activity.",
+        "Regular Customers": "A customer with moderate purchasing activity.",
+        "Needs Attention": "A customer who has not purchased recently."
+    };
+
+    profile.innerHTML = `
+        <h3>Customer Profile: ${customer.CustomerID}</h3>
+
+        <p><strong>Customer ID:</strong> ${customer.CustomerID}</p>
+        <p><strong>Segment:</strong> ${customer.Segment}</p>
+        <p><strong>Recency:</strong> ${Number(customer.Recency).toFixed(2)} days</p>
+        <p><strong>Purchase Frequency:</strong> ${Number(customer.Frequency).toFixed(0)} invoices</p>
+        <p><strong>Total Spending:</strong> £${Number(customer.Monetary).toLocaleString("en-GB", { maximumFractionDigits: 2 })}</p>
+
+        <h4>Customer Behaviour</h4>
+        <p>${behaviour[customer.Segment] || "Customer behaviour information is unavailable."}</p>
+
+        <h4>Suggested Marketing Action</h4>
+        <p>${marketingActions[customer.Segment] || "Review this customer's purchasing history."}</p>
+    `;
+
+    profile.style.display = "block";
+
+    // Highlight the selected profile
+    profile.style.border = "2px solid #4f46e5";
+    profile.style.backgroundColor = "#eef2ff";
+
+    // Bring the profile into view
+    profile.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
+function downloadCustomerReport() {
+    if (filteredCustomers.length === 0) {
+        alert("No customers available to download.");
+        return;
+    }
+
+    const headers = [
+        "Customer ID",
+        "Recency (days)",
+        "Invoices",
+        "Total Spending",
+        "Segment"
+    ];
+
+    const rows = filteredCustomers.map(c => [
+        c.CustomerID,
+        c.Recency,
+        c.Frequency,
+        c.Monetary,
+        c.Segment
+    ]);
+
+    const csvContent = [headers, ...rows]
+        .map(row =>
+            row.map(value =>
+                '"' + String(value ?? "").replace(/"/g, '""') + '"'
+            ).join(",")
+        )
+        .join("\r\n");
+
+    const blob = new Blob(
+        ["\uFEFF" + csvContent],
+        { type: "text/csv;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "customer_report.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
 }
 
 async function loadDashboard() {
@@ -340,7 +818,7 @@ async function loadDashboard() {
         const segmentData = (await segmentsResponse.json()).segments;
         const customerData = (await customersResponse.json()).customers;
         allCustomers = customerData;
-        
+
 const descriptions = {
     "High Value": "Customers who purchase frequently and generate high revenue.",
     "Loyal Customers": "Customers who regularly purchase from the business.",
@@ -353,14 +831,14 @@ document.getElementById("segmentDescriptions").innerHTML =
         <div class="recommendation-card">
             <h3>${s.Segment}</h3>
             <p>${descriptions[s.Segment]}</p>
-            
+
 <p><strong>Total Customers:</strong> ${s.Customers.toLocaleString()}</p>
 <p><strong>Customer Share:</strong> ${((s.Customers / summary.total_customers) * 100).toFixed(2)}%</p>
 
         </div>
     `).join("");
 
-        
+
 document.getElementById("recommendations").innerHTML =
     segmentData.map(s => `
         <div class="panel">
@@ -370,6 +848,71 @@ document.getElementById("recommendations").innerHTML =
             <p><strong>Recommendation:</strong> ${s.Recommendation}</p>
         </div>
     `).join("");
+
+        // Interactive Customer Segment Explorer
+        const segmentSelect = document.getElementById("explorerSegment");
+        const segmentDetails = document.getElementById("segmentDetails");
+
+        const behaviourDescriptions = {
+            "High Value": "These customers purchase frequently and generate high revenue. Focus on retaining them with premium rewards.",
+            "Loyal Customers": "These customers purchase regularly. Encourage repeat purchases through loyalty programs.",
+            "Regular Customers": "These customers show moderate purchasing activity. Use targeted offers to increase engagement.",
+            "Needs Attention": "These customers have not purchased recently. Try re-engagement campaigns and special discounts."
+        };
+
+        function updateSegmentExplorer() {
+            const selectedSegment = segmentData.find(
+                s => s.Segment === segmentSelect.value
+            );
+
+            if (!selectedSegment) {
+                segmentDetails.innerHTML = "<p>Segment data not found.</p>";
+                return;
+            }
+
+            const s = selectedSegment;
+            const customerShare =
+                (s.Customers / summary.total_customers) * 100;
+
+            segmentDetails.innerHTML = `
+                <div class="recommendation-card">
+                    <h3>${s.Segment}</h3>
+                    <p>${behaviourDescriptions[s.Segment]}</p>
+
+                    <p><strong>Total Customers:</strong>
+                        ${Number(s.Customers).toLocaleString("en-GB")}
+                    </p>
+
+                    <p><strong>Customer Share:</strong>
+                        ${customerShare.toFixed(2)}%
+                    </p>
+
+                    <p><strong>Average Recency:</strong>
+                        ${Number(s.Average_Recency).toFixed(2)} days
+                    </p>
+
+                    <p><strong>Average Purchase Frequency:</strong>
+                        ${Number(s.Average_Frequency).toFixed(2)} invoices
+                    </p>
+
+                    <p><strong>Average Spending:</strong>
+                        £${Number(s.Average_Spending).toLocaleString("en-GB", { maximumFractionDigits: 2 })}
+                    </p>
+
+                    <p><strong>Total Revenue:</strong>
+                        £${Number(s.Total_Revenue).toLocaleString("en-GB", { maximumFractionDigits: 2 })}
+                    </p>
+
+                    <p><strong>Business Recommendation:</strong>
+                        ${s.Recommendation}
+                    </p>
+                </div>
+            `;
+        }
+
+        segmentSelect.addEventListener("change", updateSegmentExplorer);
+        updateSegmentExplorer();
+
 
 
         document.getElementById("customers").textContent =
@@ -391,7 +934,7 @@ document.getElementById("recommendations").innerHTML =
         Plotly.newPlot("segmentChart", [{
             type: "bar",
             x: segmentData.map(s => s.Segment),
-            
+
 y: segmentData.map(s => s.Customers),
 text: segmentData.map(s => s.Customers.toLocaleString()),
 textposition: "outside",
