@@ -362,6 +362,26 @@ body {
             </button>
         </nav>
 
+        <div style="padding: 18px 16px; border-top: 1px solid #334155;">
+            <label for="currencySelect"
+                   style="display:block; margin-bottom:8px; color:#cbd5e1;">
+                Currency Settings
+            </label>
+
+            <select id="currencySelect"
+                    onchange="updateCurrency()"
+                    style="width:100%; padding:10px; border-radius:6px;">
+                <option value="GBP">GBP - British Pound (£)</option>
+                <option value="INR">INR - Indian Rupee (₹)</option>
+                <option value="USD">USD - US Dollar ($)</option>
+                <option value="EUR">EUR - Euro (€)</option>
+            </select>
+
+            <p style="color:#94a3b8; font-size:11px; margin-top:8px;">
+                Display formatting only. No currency conversion.
+            </p>
+        </div>
+
         <div class="sidebar-footer">
             <p>Powered by RFM & K-Means</p>
         </div>
@@ -588,6 +608,37 @@ function showPage(pageName, clickedButton) {
 }
 
 
+let selectedCurrency = "GBP";
+
+const currencyLocales = {
+    GBP: "en-GB",
+    INR: "en-IN",
+    USD: "en-US",
+    EUR: "de-DE"
+};
+
+function formatMoney(value) {
+    return new Intl.NumberFormat(currencyLocales[selectedCurrency], {
+        style: "currency",
+        currency: selectedCurrency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(Number(value) || 0);
+}
+
+function getCurrencySymbol() {
+    return new Intl.NumberFormat(currencyLocales[selectedCurrency], {
+        style: "currency",
+        currency: selectedCurrency
+    }).formatToParts(0)
+      .find(part => part.type === "currency").value;
+}
+
+function updateCurrency() {
+    selectedCurrency = document.getElementById("currencySelect").value;
+    loadDashboard();
+}
+
 let allCustomers = [];
 let filteredCustomers = [];
 let currentPage = 1;
@@ -646,13 +697,7 @@ function renderCustomerPage() {
             <td>${c.CustomerID}</td>
             <td>${c.Recency}</td>
             <td>${c.Frequency}</td>
-            <td>£${Number(c.Monetary).toLocaleString(
-                "en-GB",
-                {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }
-            )}</td>
+            <td>${formatMoney(c.Monetary)}</td>
             <td>${c.Segment}</td>
         </tr>
     `).join("");
@@ -728,7 +773,7 @@ function showCustomerProfile(customerID) {
         <p><strong>Segment:</strong> ${customer.Segment}</p>
         <p><strong>Recency:</strong> ${Number(customer.Recency).toFixed(2)} days</p>
         <p><strong>Purchase Frequency:</strong> ${Number(customer.Frequency).toFixed(0)} invoices</p>
-        <p><strong>Total Spending:</strong> £${Number(customer.Monetary).toLocaleString("en-GB", { maximumFractionDigits: 2 })}</p>
+        <p><strong>Total Spending:</strong> ${formatMoney(customer.Monetary)}</p>
 
         <h4>Customer Behaviour</h4>
         <p>${behaviour[customer.Segment] || "Customer behaviour information is unavailable."}</p>
@@ -844,7 +889,7 @@ document.getElementById("recommendations").innerHTML =
         <div class="panel">
             <h3>${s.Segment}</h3>
             <p><strong>Customers:</strong> ${s.Customers.toLocaleString()}</p>
-            <p><strong>Average spending:</strong> £${Number(s.Average_Spending).toLocaleString("en-GB", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Average spending:</strong> ${formatMoney(s.Average_Spending)}</p>
             <p><strong>Recommendation:</strong> ${s.Recommendation}</p>
         </div>
     `).join("");
@@ -896,11 +941,11 @@ document.getElementById("recommendations").innerHTML =
                     </p>
 
                     <p><strong>Average Spending:</strong>
-                        £${Number(s.Average_Spending).toLocaleString("en-GB", { maximumFractionDigits: 2 })}
+                        ${formatMoney(s.Average_Spending)}
                     </p>
 
                     <p><strong>Total Revenue:</strong>
-                        £${Number(s.Total_Revenue).toLocaleString("en-GB", { maximumFractionDigits: 2 })}
+                        ${formatMoney(s.Total_Revenue)}
                     </p>
 
                     <p><strong>Business Recommendation:</strong>
@@ -919,14 +964,10 @@ document.getElementById("recommendations").innerHTML =
             summary.total_customers.toLocaleString();
 
         document.getElementById("revenue").textContent =
-            "£" + summary.total_revenue.toLocaleString(
-                "en-GB", { maximumFractionDigits: 2 }
-            );
+            formatMoney(summary.total_revenue);
 
         document.getElementById("average").textContent =
-            "£" + summary.average_spending.toLocaleString(
-                "en-GB", { maximumFractionDigits: 2 }
-            );
+            formatMoney(summary.average_spending);
 
         document.getElementById("frequency").textContent =
             summary.average_frequency.toFixed(2);
@@ -953,7 +994,7 @@ Plotly.newPlot("spendingChart", [{
     textinfo: "percent",
     hovertemplate:
         "<b>%{label}</b><br>" +
-        "Revenue: £%{value:,.2f}<br>" +
+        "Revenue: " + getCurrencySymbol() + "%{value:,.2f}<br>" +
         "Share: %{percent}<extra></extra>"
 }], {
 
