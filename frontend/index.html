@@ -360,6 +360,9 @@ body {
             <button class="nav-item" onclick="showPage('reports', this)">
                 <span>05</span> Reports
             </button>
+            <button class="nav-item" onclick="showPage('datasets', this)">
+                <span>06</span> Dataset Management
+            </button>
         </nav>
 
         <div style="padding: 18px 16px; border-top: 1px solid #334155;">
@@ -571,6 +574,81 @@ body {
             </button>
         </div>
                 </section>
+
+            </section>
+
+            <section id="page-datasets" class="app-page">
+                <h2 class="page-heading">Dataset Management</h2>
+
+                <section class="panel">
+                    <h2>Upload a Dataset</h2>
+                    <p>Upload a CSV file to create a customer segmentation dataset.</p>
+
+                    <label for="datasetFile"><strong>Select CSV File</strong></label>
+                    <input type="file" id="datasetFile" accept=".csv"
+                           style="display:block; margin:12px 0;">
+
+                    <label for="mappingMode"><strong>Column Mapping Mode</strong></label>
+                    <select id="mappingMode" style="display:block; width:100%; padding:10px; margin:10px 0;">
+                        <option value="standard">Standard CSV (automatic column detection)</option>
+                        <option value="custom">Custom CSV (choose columns manually)</option>
+                    </select>
+
+                    <div id="columnMapping" style="display:none; margin-top:15px;">
+                        <h3>Map Your CSV Columns</h3>
+                        <p>Select which CSV columns represent each field.</p>
+                        <div id="mappingFields"></div>
+                    </div>
+
+                    <button id="inspectDatasetButton" onclick="inspectDataset()"
+                            style="background:#2563eb; color:white; border:none; padding:11px 18px; border-radius:6px; cursor:pointer;">
+                        Validate and Preview CSV
+                    </button>
+
+                    <p id="uploadStatus" role="status" aria-live="polite"></p>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>Dataset Preview</h2>
+                    <div id="datasetPreview">
+                        <p>Upload and validate a CSV file to see its first 10 rows.</p>
+                    </div>
+
+                    <div id="datasetSaveFields" style="display:none; margin-top:20px;">
+                        <label for="datasetName"><strong>Dataset Name</strong></label>
+                        <input id="datasetName" type="text" placeholder="Enter dataset name"
+                               style="display:block; width:100%; padding:10px; margin:8px 0 15px; box-sizing:border-box;">
+
+                        <label for="datasetCurrency"><strong>Dataset Currency</strong></label>
+                        <select id="datasetCurrency" style="display:block; width:100%; padding:10px; margin:8px 0 15px;">
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="INR" selected>INR - Indian Rupee</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                        </select>
+
+                        <button id="saveDatasetButton" onclick="saveDataset()"
+                                style="background:#15803d; color:white; border:none; padding:11px 18px; border-radius:6px; cursor:pointer;">
+                            Save Dataset
+                        </button>
+                    </div>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>Saved Datasets</h2>
+                    <p>Select a saved dataset to load its own dashboard analytics.</p>
+
+                    <select id="savedDatasetSelect" style="width:100%; padding:10px; margin:10px 0;">
+                        <option value="">Loading datasets...</option>
+                    </select>
+
+                    <button id="activateDatasetButton" onclick="activateDataset()"
+                            style="background:#2563eb; color:white; border:none; padding:11px 18px; border-radius:6px; cursor:pointer;">
+                        Switch Active Dataset
+                    </button>
+
+                    <p id="datasetListStatus" role="status" aria-live="polite"></p>
+                </section>
             </section>
         </main>
     </div>
@@ -636,7 +714,7 @@ function getCurrencySymbol() {
 
 function updateCurrency() {
     selectedCurrency = document.getElementById("currencySelect").value;
-    loadDashboard();
+    loadDashboard(window.activeDatasetId || "online_retail");
 }
 
 let allCustomers = [];
@@ -843,15 +921,17 @@ function downloadCustomerReport() {
     URL.revokeObjectURL(url);
 }
 
-async function loadDashboard() {
+async function loadDashboard(datasetId = null) {
     const status = document.getElementById("status");
+    const activeDatasetId = datasetId || window.activeDatasetId || "online_retail";
+    const datasetQuery = `?dataset_id=${encodeURIComponent(activeDatasetId)}`;
 
     try {
         const [summaryResponse, segmentsResponse, customersResponse] =
             await Promise.all([
-                fetch("/api/summary"),
-                fetch("/api/segments"),
-                fetch("/api/customers")
+                fetch(`/api/summary${datasetQuery}`),
+                fetch(`/api/segments${datasetQuery}`),
+                fetch(`/api/customers${datasetQuery}`)
             ]);
 
         if (!summaryResponse.ok || !segmentsResponse.ok ||
@@ -1011,13 +1091,451 @@ Plotly.newPlot("spendingChart", [{
     }
 }
 
+
+
+async function saveDataset() {
+    const status = document.getElementById("uploadStatus");
+    const button = document.getElementById("saveDatasetButton");
+
+    const datasetName =
+        document.getElementById("datasetName").value.trim();
+
+    const currency =
+        document.getElementById("datasetCurrency").value;
+
+    if (!pendingUploadId) {
+        status.textContent = "Please validate a CSV file before saving.";
+        return;
+    }
+
+    if (!datasetName) {
+        status.textContent = "Please enter a dataset name.";
+        return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Saving dataset...";
+
+    try {
+        const response = await fetch("/api/datasets/save", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                upload_id: pendingUploadId,
+                name: datasetName,
+                currency: currency,
+                mapping: pendingMapping
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not save dataset.");
+        }
+
+        pendingUploadId = null;
+        pendingMapping = {};
+
+        status.textContent =
+            `Dataset "${result.name}" saved successfully!`;
+
+        document.getElementById("datasetName").value = "";
+        document.getElementById("datasetSaveFields").style.display = "none";
+
+        await loadSavedDatasets();
+
+    } catch (error) {
+        status.textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+async function loadSavedDatasets() {
+    const select = document.getElementById("savedDatasetSelect");
+    const status = document.getElementById("datasetListStatus");
+
+    try {
+        const response = await fetch("/api/datasets");
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not load saved datasets.");
+        }
+
+        window.savedDatasetRecords = result.datasets || [];
+        window.activeDatasetId = result.active_dataset || "online_retail";
+
+        select.innerHTML = "";
+
+        window.savedDatasetRecords.forEach(dataset => {
+            const option = document.createElement("option");
+            option.value = dataset.id;
+            option.textContent =
+                dataset.name +
+                (dataset.id === window.activeDatasetId ? " (Active)" : "");
+            select.appendChild(option);
+        });
+
+        select.value = window.activeDatasetId;
+
+        const activeDataset = window.savedDatasetRecords.find(
+            dataset => dataset.id === window.activeDatasetId
+        );
+
+        if (activeDataset && activeDataset.currency) {
+            selectedCurrency = activeDataset.currency;
+
+            const currencySelect =
+                document.getElementById("currencySelect");
+
+            if (currencySelect) {
+                currencySelect.value = selectedCurrency;
+            }
+        }
+
+        status.textContent =
+            `${window.savedDatasetRecords.length} dataset(s) available.`;
+
+    } catch (error) {
+        status.textContent = error.message;
+        console.error("Dataset loading error:", error);
+    }
+}
+
+
+async function activateDataset() {
+    const select = document.getElementById("savedDatasetSelect");
+    const status = document.getElementById("datasetListStatus");
+    const button = document.getElementById("activateDatasetButton");
+
+    const datasetId = select.value;
+
+    if (!datasetId) {
+        status.textContent = "Please select a dataset.";
+        return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Switching dataset...";
+
+    try {
+        const response = await fetch("/api/datasets/activate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                dataset_id: datasetId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not switch dataset.");
+        }
+
+        window.activeDatasetId = result.active_dataset;
+
+        const activeDataset = window.savedDatasetRecords.find(
+            dataset => dataset.id === window.activeDatasetId
+        );
+
+        if (activeDataset && activeDataset.currency) {
+            selectedCurrency = activeDataset.currency;
+
+            const currencySelect =
+                document.getElementById("currencySelect");
+
+            if (currencySelect) {
+                currencySelect.value = selectedCurrency;
+            }
+        }
+
+        await loadDashboard(window.activeDatasetId);
+        await loadSavedDatasets();
+
+        status.textContent =
+            "Dataset switched successfully. Dashboard updated.";
+
+    } catch (error) {
+        status.textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// ================= DATASET MANAGEMENT =================
+
+let pendingUploadId = null;
+let pendingMapping = {};
+
+const mappingLabels = {
+    customer_id: "Customer ID",
+    invoice_id: "Invoice ID",
+    invoice_date: "Invoice Date",
+    revenue: "Revenue",
+    quantity: "Quantity",
+    unit_price: "Unit Price"
+};
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
+}
+
+document.getElementById("mappingMode").addEventListener("change", () => {
+    const customMode =
+        document.getElementById("mappingMode").value === "custom";
+
+    document.getElementById("columnMapping").style.display =
+        customMode ? "block" : "none";
+
+    if (customMode && window.uploadColumns) {
+        renderMappingFields(window.uploadColumns);
+    }
+});
+
+function parseCSVHeader(text) {
+    text = text.replace(/^\uFEFF/, "");
+
+    const headers = [];
+    let value = "";
+    let quoted = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const character = text[i];
+
+        if (character === '"') {
+            if (quoted && text[i + 1] === '"') {
+                value += '"';
+                i++;
+            } else {
+                quoted = !quoted;
+            }
+        } else if (character === "," && !quoted) {
+            headers.push(value.trim());
+            value = "";
+        } else if ((character === "\n" || character === "\r") && !quoted) {
+            break;
+        } else {
+            value += character;
+        }
+    }
+
+    if (quoted) {
+        throw new Error("Could not read the CSV header. Check its quotation marks.");
+    }
+
+    headers.push(value.trim());
+
+    if (headers.length === 0 || headers.some(header => !header)) {
+        throw new Error("The CSV header contains an empty column name.");
+    }
+
+    return headers;
+}
+
+
+document.getElementById("datasetFile").addEventListener("change", async event => {
+    pendingUploadId = null;
+    pendingMapping = {};
+    window.uploadColumns = null;
+
+    document.getElementById("datasetSaveFields").style.display = "none";
+    document.getElementById("datasetPreview").innerHTML =
+        "<p>Validate the newly selected CSV to preview it.</p>";
+
+    document.getElementById("uploadStatus").textContent = "";
+
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+        document.getElementById("uploadStatus").textContent =
+            "Please select a CSV file.";
+        return;
+    }
+
+    try {
+        const headerText = await file.slice(0, 256 * 1024).text();
+        window.uploadColumns = parseCSVHeader(headerText);
+
+        const customMode =
+            document.getElementById("mappingMode").value === "custom";
+
+        document.getElementById("columnMapping").style.display =
+            customMode ? "block" : "none";
+
+        if (customMode) {
+            renderMappingFields(window.uploadColumns);
+        }
+
+        document.getElementById("uploadStatus").textContent =
+            `${window.uploadColumns.length} CSV columns detected successfully.`;
+
+    } catch (error) {
+        window.uploadColumns = null;
+        document.getElementById("uploadStatus").textContent =
+            error.message;
+    }
+});
+
+function renderMappingFields(columns) {
+    const fields = Object.keys(mappingLabels);
+
+    document.getElementById("mappingFields").innerHTML =
+        fields.map(field => `
+            <label style="display:block; margin:12px 0;">
+                <strong>${mappingLabels[field]}</strong>
+                <select id="map_${field}"
+                        style="display:block; width:100%; padding:9px; margin-top:5px;">
+                    <option value="">-- Not mapped --</option>
+                    ${columns.map(column => `
+                        <option value="${escapeHTML(column)}">
+                            ${escapeHTML(column)}
+                        </option>
+                    `).join("")}
+                </select>
+            </label>
+        `).join("");
+}
+
+async function inspectDataset() {
+    const fileInput = document.getElementById("datasetFile");
+    const status = document.getElementById("uploadStatus");
+    const preview = document.getElementById("datasetPreview");
+
+    if (!fileInput.files.length) {
+        status.textContent = "Please select a CSV file first.";
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+        status.textContent = "Please select a CSV file.";
+        return;
+    }
+
+    const button = document.getElementById("inspectDatasetButton");
+    button.disabled = true;
+    status.textContent = "Uploading and validating CSV...";
+
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const customMode =
+            document.getElementById("mappingMode").value === "custom";
+
+        let mapping = {};
+
+        if (customMode) {
+            Object.keys(mappingLabels).forEach(field => {
+                const select = document.getElementById("map_" + field);
+                if (select && select.value) {
+                    mapping[field] = select.value;
+                }
+            });
+
+            formData.append("mapping", JSON.stringify(mapping));
+        }
+
+        const response = await fetch("/api/datasets/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "CSV validation failed.");
+        }
+
+        pendingUploadId = result.upload_id;
+        pendingMapping = result.mapping;
+        window.uploadColumns = result.columns;
+
+        if (customMode) {
+            renderMappingFields(result.columns);
+
+            Object.entries(result.mapping).forEach(([field, column]) => {
+                const select = document.getElementById("map_" + field);
+                if (select) select.value = column;
+            });
+        }
+
+        const columns = Object.keys(result.preview[0] || {});
+
+        preview.innerHTML = `
+            <p><strong>File:</strong> ${escapeHTML(result.filename)}</p>
+            <p><strong>Valid rows:</strong> ${result.row_count.toLocaleString()}</p>
+            <p><strong>Unique customers:</strong> ${result.customer_count.toLocaleString()}</p>
+            <p><strong>Detected mapping:</strong></p>
+            <ul>
+                ${Object.entries(result.mapping).map(([field, column]) =>
+                    `<li>${mappingLabels[field]}: ${escapeHTML(column)}</li>`
+                ).join("")}
+            </ul>
+            <p><strong>First 10 rows:</strong></p>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>${columns.map(column =>
+                            `<th style="padding:8px; border:1px solid #ddd;">${escapeHTML(column)}</th>`
+                        ).join("")}</tr>
+                    </thead>
+                    <tbody>
+                        ${result.preview.map(row => `
+                            <tr>${columns.map(column =>
+                                `<td style="padding:8px; border:1px solid #ddd;">${escapeHTML(row[column])}</td>`
+                            ).join("")}</tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        document.getElementById("datasetSaveFields").style.display = "block";
+        status.textContent = "CSV validated successfully. You can now save it.";
+
+    } catch (error) {
+        pendingUploadId = null;
+        pendingMapping = {};
+        document.getElementById("datasetSaveFields").style.display = "none";
+        status.textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
 document.getElementById("customerSearch")
     .addEventListener("input", displayCustomers);
 
 document.getElementById("segmentFilter")
     .addEventListener("change", displayCustomers);
 
-loadDashboard();
+async function initializeDashboard() {
+    await loadSavedDatasets();
+    await loadDashboard(window.activeDatasetId || "online_retail");
+}
+
+initializeDashboard();
 </script>
 </body>
 </html>

@@ -8,3 +8,10 @@
 # ZIP archive inside data folder
 /data/customer_segmentation_dashboard.zip
 
+
+# Analyst uploaded datasets and metadata
+/data/uploads/
+/data/datasets/
+/data/metadata/
+# Project safety backups
+/backups/
