@@ -15,3 +15,12 @@
 /data/metadata/
 # Project safety backups
 /backups/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Frontend safety backups
+*.backup
+*.backup*
+index_before_*.html

@@ -1455,16 +1455,31 @@ async function inspectDataset() {
             formData.append("mapping", JSON.stringify(mapping));
         }
 
+
         const response = await fetch("/api/datasets/upload", {
             method: "POST",
             body: formData
         });
 
-        const result = await response.json();
+
+        let result = {};
+
+        if (response.status === 413) {
+            throw new Error(
+                "File exceeds the 50 MB upload limit. Please select a smaller CSV file."
+            );
+        }
+
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            throw new Error("Unable to process the uploaded file. Please try again.");
+        }
 
         if (!response.ok) {
             throw new Error(result.error || "CSV validation failed.");
         }
+
 
         pendingUploadId = result.upload_id;
         pendingMapping = result.mapping;
