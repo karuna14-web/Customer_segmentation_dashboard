@@ -384,6 +384,109 @@ def customers():
 
 
 
+
+@app.route("/api/retention-risk")
+def retention_risk():
+    dataset_id = request.args.get("dataset_id")
+    rfm = get_customer_data(dataset_id).copy()
+
+    # Calculate relative percentile ranks
+    recency_rank = rfm["Recency"].rank(pct=True)
+    frequency_rank = rfm["Frequency"].rank(pct=True)
+    monetary_rank = rfm["Monetary"].rank(pct=True)
+
+    # Higher score means greater retention risk
+    rfm["Risk_Score"] = (
+        recency_rank * 50
+        + (1 - frequency_rank) * 25
+        + (1 - monetary_rank) * 25
+    )
+
+    # Classify customers
+    def classify_risk(score):
+        if score >= 70:
+            return "High"
+        elif score >= 40:
+            return "Medium"
+        return "Low"
+
+    rfm["Risk_Level"] = rfm["Risk_Score"].apply(classify_risk)
+
+    # Explain the main risk factors
+    def get_risk_factors(row):
+        factors = []
+
+        if row["Recency_Rank"] >= 0.70:
+            factors.append("Long time since last purchase")
+
+        if row["Frequency_Rank"] <= 0.30:
+            factors.append("Low purchase frequency")
+
+        if row["Monetary_Rank"] <= 0.30:
+            factors.append("Low total spending")
+
+        if not factors:
+            factors.append("No major relative risk factor")
+
+        return factors
+
+    rfm["Recency_Rank"] = recency_rank
+    rfm["Frequency_Rank"] = frequency_rank
+    rfm["Monetary_Rank"] = monetary_rank
+
+    rfm["Risk_Factors"] = rfm.apply(get_risk_factors, axis=1)
+
+    # Recommend retention actions
+    def get_retention_action(row):
+        if row["Risk_Level"] == "High":
+            if row["Segment"] == "High Value":
+                return "Provide VIP attention and a personalized retention offer."
+            return "Send a targeted reactivation offer."
+
+        elif row["Risk_Level"] == "Medium":
+            return "Send a personalized reminder or loyalty reward."
+
+        return "Maintain engagement with loyalty benefits."
+
+    rfm["Retention_Action"] = rfm.apply(
+        get_retention_action, axis=1
+    )
+
+    rfm = rfm.sort_values("Risk_Score", ascending=False)
+
+    risk_counts = (
+        rfm["Risk_Level"]
+        .value_counts()
+        .to_dict()
+    )
+
+    customers = rfm[
+        [
+            "CustomerID",
+            "Segment",
+            "Recency",
+            "Frequency",
+            "Monetary",
+            "Risk_Score",
+            "Risk_Level",
+            "Risk_Factors",
+            "Retention_Action"
+        ]
+    ].copy()
+
+    customers["Risk_Score"] = customers["Risk_Score"].round(2)
+    customers["Monetary"] = customers["Monetary"].round(2)
+
+    return jsonify({
+        "total_customers": int(len(rfm)),
+        "high_risk": int(risk_counts.get("High", 0)),
+        "medium_risk": int(risk_counts.get("Medium", 0)),
+        "low_risk": int(risk_counts.get("Low", 0)),
+        "customers": customers.to_dict(orient="records")
+    })
+
+
+
 @app.route("/api/datasets", methods=["GET"])
 def datasets():
     registry = load_dataset_registry()

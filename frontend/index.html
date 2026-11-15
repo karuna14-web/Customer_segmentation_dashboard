@@ -332,6 +332,556 @@ body {
     }
 }
 
+
+
+    /* PREMIUM ANALYTICS THEME V1 */
+
+    :root {
+        --brand-dark: #111b35;
+        --brand-primary: #4f46e5;
+        --brand-secondary: #6366f1;
+        --brand-cyan: #06b6d4;
+        --surface: #ffffff;
+        --page-bg: #f3f6fc;
+        --text-main: #172554;
+        --text-muted: #64748b;
+        --border-soft: #e5eaf3;
+    }
+
+    body {
+        background: var(--page-bg);
+        color: var(--text-main);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .app-shell {
+        background: var(--page-bg);
+    }
+
+    /* Premium sidebar */
+    .sidebar {
+        background: linear-gradient(180deg, #111b35 0%, #202d55 100%);
+        box-shadow: 5px 0 24px rgba(15, 23, 42, 0.12);
+        width: 260px;
+    }
+
+    .sidebar-brand h2 {
+        font-size: 22px;
+        letter-spacing: -0.6px;
+        color: #ffffff;
+    }
+
+    .sidebar-brand p {
+        color: #aab8d5;
+        line-height: 1.6;
+    }
+
+    .sidebar-nav {
+        gap: 8px;
+    }
+
+    .nav-item {
+        border: 1px solid transparent;
+        border-radius: 11px;
+        padding: 14px 13px;
+        color: #cbd5e1;
+        transition: all 0.22s ease;
+    }
+
+    .nav-item span {
+        color: #9daee8;
+        font-weight: 700;
+    }
+
+    .nav-item:hover {
+        background: rgba(99, 102, 241, 0.18);
+        border-color: rgba(165, 180, 252, 0.15);
+        transform: translateX(3px);
+    }
+
+    .nav-item.active {
+        background: linear-gradient(100deg, #4f46e5, #6366f1);
+        color: white;
+        box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+    }
+
+    .nav-item.active span {
+        color: #ffffff;
+    }
+
+    /* Main header */
+    .topbar {
+        background: rgba(255, 255, 255, 0.96);
+        padding: 25px 34px;
+        border-bottom: 1px solid var(--border-soft);
+        box-shadow: 0 3px 12px rgba(15, 23, 42, 0.035);
+    }
+
+    .topbar h1 {
+        color: #172554;
+        font-size: 27px;
+        font-weight: 750;
+        letter-spacing: -0.8px;
+    }
+
+    .topbar p {
+        color: #718096;
+        line-height: 1.6;
+    }
+
+    .page-content {
+        padding: 32px 34px;
+    }
+
+    .page-heading {
+        color: #172554;
+        font-size: 25px;
+        font-weight: 750;
+        letter-spacing: -0.6px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #6366f1;
+        display: inline-block;
+    }
+
+    /* Analytics cards */
+    .card, .panel {
+        background: #ffffff;
+        border: 1px solid #e7ebf4;
+        border-radius: 17px;
+        box-shadow: 0 5px 20px rgba(30, 41, 59, 0.055);
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    }
+
+    .card:nth-child(2)::before {
+        background: linear-gradient(90deg, #ef4444, #fb7185);
+    }
+
+    .card:nth-child(3)::before {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .card:nth-child(4)::before {
+        background: linear-gradient(90deg, #059669, #34d399);
+    }
+
+    .card:hover, .panel:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(30, 41, 59, 0.09);
+    }
+
+    .card h3 {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 650;
+        letter-spacing: 0.35px;
+    }
+
+    .metric {
+        color: #252f65;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+
+    .panel h2 {
+        color: #202d55;
+        font-weight: 700;
+    }
+
+    .panel p {
+        line-height: 1.7;
+    }
+
+    /* Tables */
+    .table-wrap {
+        border: 1px solid var(--border-soft);
+        border-radius: 13px;
+        background: white;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 650px;
+    }
+
+    th {
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 14px 13px;
+        font-size: 11px;
+        letter-spacing: 0.7px;
+    }
+
+    td {
+        padding: 13px;
+        color: #334155;
+        font-size: 13px;
+    }
+
+    tbody tr:nth-child(even) {
+        background: #fafbff;
+    }
+
+    tbody tr:hover {
+        background: #eef2ff;
+    }
+
+    /* Inputs and filters */
+    input, select, textarea {
+        border: 1px solid #d8dfed;
+        border-radius: 10px;
+        padding: 11px 13px;
+        background: #ffffff;
+        color: #1e293b;
+        transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+    }
+
+    /* Buttons */
+    .page-content button {
+        border-radius: 10px;
+        font-weight: 650;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .page-content button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 13px rgba(79, 70, 229, 0.16);
+    }
+
+    .recommendation-card {
+        border-radius: 15px;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #6366f1;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 800px) {
+        .sidebar {
+            width: 100%;
+        }
+
+        .page-content {
+            padding: 20px 16px;
+        }
+
+        .topbar {
+            padding: 20px;
+        }
+
+        .topbar h1 {
+            font-size: 22px;
+        }
+
+        .page-heading {
+            font-size: 21px;
+        }
+    }
+
+    
+
+    
+
+    /* MIDNIGHT NEON DARK THEME V1 */
+
+    :root {
+        --brand-dark: #080f20;
+        --primary: #8b5cf6;
+        --secondary: #a78bfa;
+        --cyan: #22d3ee;
+        --surface: #111a2e;
+        --page-bg: #080d1a;
+        --text-main: #e6edff;
+        --text-muted: #9aa9c7;
+        --border-soft: rgba(148, 163, 184, 0.18);
+    }
+
+    html, body {
+        background: #080d1a !important;
+        color: #e6edff !important;
+    }
+
+    body {
+        background-image:
+            radial-gradient(
+                circle at 85% 5%,
+                rgba(139, 92, 246, 0.10),
+                transparent 28%
+            ),
+            radial-gradient(
+                circle at 10% 80%,
+                rgba(34, 211, 238, 0.06),
+                transparent 25%
+            ) !important;
+    }
+
+    .app-shell,
+    .main-area,
+    .page-content,
+    .app-page {
+        background: transparent !important;
+        color: #e6edff !important;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        background: linear-gradient(
+            180deg,
+            #080f20 0%,
+            #11152b 55%,
+            #17132f 100%
+        ) !important;
+        border-right: 1px solid rgba(139, 92, 246, 0.25) !important;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.22);
+    }
+
+    .sidebar *,
+    .sidebar p,
+    .sidebar span {
+        color: #cbd5f5;
+    }
+
+    .sidebar .nav-item {
+        color: #aebbd6 !important;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .sidebar .nav-item:hover {
+        background: rgba(139, 92, 246, 0.13) !important;
+        color: #ffffff !important;
+        border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    .sidebar .nav-item.active {
+        background: linear-gradient(
+            100deg,
+            rgba(139, 92, 246, 0.30),
+            rgba(34, 211, 238, 0.12)
+        ) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(167, 139, 250, 0.38);
+        box-shadow: 0 0 18px rgba(139, 92, 246, 0.12);
+    }
+
+    /* Top navigation */
+    .topbar {
+        background: rgba(17, 26, 46, 0.88) !important;
+        color: #e6edff !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16) !important;
+        backdrop-filter: blur(14px);
+    }
+
+    .topbar h1,
+    .topbar h2,
+    .page-heading {
+        color: #f1f5ff !important;
+    }
+
+    /* Headings and general text */
+    h1, h2, h3, h4, h5, h6 {
+        color: #e6edff;
+    }
+
+    p, label, small {
+        color: #aab8d3;
+    }
+
+    .page-content {
+        color: #dbe5fa !important;
+    }
+
+    /* Cards and panels */
+    .card,
+    .panel,
+    .recommendation-card,
+    .table-wrap {
+        background: linear-gradient(
+            145deg,
+            #151f35,
+            #10192b
+        ) !important;
+        color: #e6edff !important;
+        border: 1px solid rgba(148, 163, 184, 0.17) !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.20);
+    }
+
+    .card h1, .card h2, .card h3,
+    .panel h1, .panel h2, .panel h3,
+    .recommendation-card h1,
+    .recommendation-card h2,
+    .recommendation-card h3 {
+        color: #f1f5ff !important;
+    }
+
+    .card p, .panel p,
+    .recommendation-card p {
+        color: #aab8d3 !important;
+    }
+
+    /* Metric highlights */
+    .card h2,
+    .card .value,
+    .metric-value {
+        color: #22d3ee !important;
+    }
+
+    /* Tables */
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        background: transparent !important;
+        color: #dbe5fa !important;
+    }
+
+    thead th,
+    th {
+        background: #202b46 !important;
+        color: #c4b5fd !important;
+        border-bottom: 1px solid rgba(139, 92, 246, 0.28);
+    }
+
+    td {
+        color: #d3def2 !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+    }
+
+    tbody tr,
+    tbody tr:nth-child(even) {
+        background: rgba(17, 26, 46, 0.55) !important;
+    }
+
+    tbody tr:hover {
+        background: rgba(139, 92, 246, 0.13) !important;
+    }
+
+    /* Inputs, search and dropdowns */
+    input, select, textarea {
+        background: #0c1528 !important;
+        color: #e6edff !important;
+        border: 1px solid #34415f !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #71819f !important;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none !important;
+        border-color: #22d3ee !important;
+        box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.13) !important;
+    }
+
+    select option {
+        background: #111a2e;
+        color: #e6edff;
+    }
+
+    /* Buttons */
+    .page-content button {
+        color: #f1f5ff;
+        border-color: rgba(148, 163, 184, 0.20);
+    }
+
+    .page-content button:hover {
+        box-shadow: 0 5px 20px rgba(139, 92, 246, 0.22);
+    }
+
+    /* Recommendation accents */
+    .recommendation-card {
+        border-left: 4px solid #8b5cf6 !important;
+    }
+
+    /* Scrollbars */
+    * {
+        scrollbar-color: #485477 #0b1426;
+        scrollbar-width: thin;
+    }
+
+    *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: #0b1426;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background: #485477;
+        border-radius: 10px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background: #8b5cf6;
+    }
+
+    /* Retention risk chart and other chart containers */
+    #retentionRiskChart,
+    #customerChart,
+    #segmentChart,
+    .chart-container {
+        color: #e6edff;
+    }
+
+    /* Keep mobile layout rules intact */
+    @media (max-width: 800px) {
+        .sidebar {
+            background: linear-gradient(
+                180deg,
+                #080f20,
+                #17132f
+            ) !important;
+        }
+    }
+
+
+
+
+    /* MIDNIGHT NEON METRIC VISIBILITY FIX */
+
+    .metric {
+        color: #67e8f9 !important;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.7px;
+        text-shadow: 0 0 16px rgba(34, 211, 238, 0.16);
+    }
+
+    .card h3 {
+        color: #c4b5fd !important;
+    }
+
+    #status {
+        color: #67e8f9 !important;
+    }
+
 </style>
 </head>
 <body>
@@ -362,6 +912,9 @@ body {
             </button>
             <button class="nav-item" onclick="showPage('datasets', this)">
                 <span>06</span> Dataset Management
+            </button>
+            <button class="nav-item" onclick="showPage('retention', this)">
+                <span>07</span> Retention &amp; Churn Risk
             </button>
         </nav>
 
@@ -648,6 +1201,110 @@ body {
                     </button>
 
                     <p id="datasetListStatus" role="status" aria-live="polite"></p>
+                </section>
+            </section>
+
+            <section id="page-retention" class="app-page">
+                <h2 class="page-heading">Retention &amp; Churn Risk Monitor</h2>
+
+                <section class="panel">
+                    <h2>Customer Retention Overview</h2>
+                    <p>
+                        Identify customers who may need attention based on
+                        their Recency, Frequency and Monetary behaviour.
+                    </p>
+                    <p style="color:#64748b; font-size:13px;">
+                        Risk scores are relative to the currently selected
+                        dataset. They are rule-based indicators, not predictions
+                        trained on historical churn labels.
+                    </p>
+                </section>
+
+                <section class="cards" style="margin-top:20px;">
+                    <div class="card">
+                        <h3>Total Customers Analysed</h3>
+                        <div class="metric" id="retentionTotal">--</div>
+                    </div>
+                    <div class="card">
+                        <h3>High Risk Customers</h3>
+                        <div class="metric" id="retentionHigh" style="color:#dc2626;">--</div>
+                    </div>
+                    <div class="card">
+                        <h3>Medium Risk Customers</h3>
+                        <div class="metric" id="retentionMedium" style="color:#d97706;">--</div>
+                    </div>
+                    <div class="card">
+                        <h3>Low Risk Customers</h3>
+                        <div class="metric" id="retentionLow" style="color:#15803d;">--</div>
+                    </div>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>Customer Risk Distribution</h2>
+                    <div id="retentionRiskChart" style="min-height:320px;"></div>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>Customer Retention Risk Details</h2>
+
+                    <div class="filter-bar">
+                        <div>
+                            <label for="retentionSearch"><strong>Search Customer ID</strong></label>
+                            <input id="retentionSearch" type="text"
+                                   placeholder="Enter customer ID"
+                                   oninput="filterRetentionCustomers()">
+                        </div>
+
+                        <div>
+                            <label for="retentionRiskFilter"><strong>Filter by Risk</strong></label>
+                            <select id="retentionRiskFilter"
+                                    onchange="filterRetentionCustomers()">
+                                <option value="All">All Risk Levels</option>
+                                <option value="High">High Risk</option>
+                                <option value="Medium">Medium Risk</option>
+                                <option value="Low">Low Risk</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Customer ID</th>
+                                    <th>Segment</th>
+                                    <th>Recency</th>
+                                    <th>Frequency</th>
+                                    <th>Spending</th>
+                                    <th>Risk Score</th>
+                                    <th>Risk Level</th>
+                                    <th>Risk Factors</th>
+                                    <th>Retention Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="retentionTableBody">
+                                <tr>
+                                    <td colspan="9">Loading retention data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p id="retentionResultCount" style="color:#64748b;"></p>
+                    <p id="retentionStatus" role="status" aria-live="polite"></p>
+                </section>
+
+                <section class="panel" style="margin-top:20px;">
+                    <h2>How Risk Is Calculated</h2>
+                    <ul>
+                        <li>Recency contributes 50% of the risk score.</li>
+                        <li>Purchase Frequency contributes 25%.</li>
+                        <li>Total Monetary Spending contributes 25%.</li>
+                        <li>Higher inactivity and lower purchase activity or spending increase risk.</li>
+                    </ul>
+                    <p><strong>Risk categories:</strong>
+                        Low: below 40 | Medium: 40–69 | High: 70 and above.
+                    </p>
                 </section>
             </section>
         </main>
@@ -1063,7 +1720,15 @@ marker: { color: "#4f46e5" }
 
         }], {
             margin: { t: 20, b: 50, l: 45, r: 15 },
-            yaxis: { title: "Customers" }
+            paper_bgcolor: "#151f35",
+            plot_bgcolor: "#151f35",
+            font: { color: "#e6edff" },
+            yaxis: {
+                title: { text: "Customers", font: { color: "#c4b5fd" } },
+                tickfont: { color: "#cbd5e1" },
+                gridcolor: "rgba(148,163,184,0.16)"
+            },
+            xaxis: { tickfont: { color: "#cbd5e1" } }
         }, { responsive: true });
 
 Plotly.newPlot("spendingChart", [{
@@ -1071,17 +1736,27 @@ Plotly.newPlot("spendingChart", [{
     labels: segmentData.map(s => s.Segment),
     values: segmentData.map(s => s.Total_Revenue),
     hole: 0.45,
+    marker: {
+        colors: ["#22d3ee", "#8b5cf6", "#34d399", "#fbbf24"],
+        line: { color: "#151f35", width: 3 }
+    },
+    textfont: { color: "#ffffff", size: 13 },
     textinfo: "percent",
     hovertemplate:
         "<b>%{label}</b><br>" +
         "Revenue: " + getCurrencySymbol() + "%{value:,.2f}<br>" +
         "Share: %{percent}<extra></extra>"
 }], {
-
-            margin: { t: 20, b: 20, l: 20, r: 20 }
-        }, { responsive: true });
+    margin: { t: 20, b: 20, l: 20, r: 20 },
+    paper_bgcolor: "#151f35",
+    plot_bgcolor: "#151f35",
+    font: { color: "#e6edff" },
+    legend: { font: { color: "#e6edff" } }
+}, { responsive: true });
 
         displayCustomers();
+
+        await loadRetentionRisk(activeDatasetId);
 
         status.textContent = "Dashboard loaded successfully.";
     } catch (error) {
@@ -1091,6 +1766,158 @@ Plotly.newPlot("spendingChart", [{
     }
 }
 
+
+
+
+let retentionCustomers = [];
+
+function escapeRetentionHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+async function loadRetentionRisk(datasetId) {
+    const status = document.getElementById("retentionStatus");
+    const tableBody = document.getElementById("retentionTableBody");
+
+    if (!status || !tableBody) return;
+
+    status.textContent = "Loading retention risk data...";
+
+    try {
+        const response = await fetch(
+            `/api/retention-risk?dataset_id=${encodeURIComponent(datasetId)}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Could not retrieve retention risk data.");
+        }
+
+        const data = await response.json();
+
+        retentionCustomers = data.customers || [];
+
+        document.getElementById("retentionTotal").textContent =
+            Number(data.total_customers).toLocaleString();
+
+        document.getElementById("retentionHigh").textContent =
+            Number(data.high_risk).toLocaleString();
+
+        document.getElementById("retentionMedium").textContent =
+            Number(data.medium_risk).toLocaleString();
+
+        document.getElementById("retentionLow").textContent =
+            Number(data.low_risk).toLocaleString();
+
+        Plotly.newPlot("retentionRiskChart", [{
+            type: "bar",
+            x: ["High Risk", "Medium Risk", "Low Risk"],
+            y: [data.high_risk, data.medium_risk, data.low_risk],
+            text: [
+                Number(data.high_risk).toLocaleString(),
+                Number(data.medium_risk).toLocaleString(),
+                Number(data.low_risk).toLocaleString()
+            ],
+            textposition: "outside",
+            marker: {
+                color: ["#fb7185", "#fbbf24", "#34d399"]
+            }
+        }], {
+            margin: { t: 25, b: 50, l: 55, r: 20 },
+            paper_bgcolor: "#151f35",
+            plot_bgcolor: "#151f35",
+            font: { color: "#e6edff" },
+            yaxis: {
+                title: { text: "Number of Customers", font: { color: "#c4b5fd" } },
+                tickfont: { color: "#cbd5e1" },
+                gridcolor: "rgba(148,163,184,0.16)"
+            },
+            xaxis: {
+                title: { text: "Retention Risk Level", font: { color: "#c4b5fd" } },
+                tickfont: { color: "#cbd5e1" }
+            }
+        }, {
+            responsive: true
+        });
+
+        filterRetentionCustomers();
+
+        status.textContent =
+            "Retention risk data loaded successfully.";
+
+    } catch (error) {
+        retentionCustomers = [];
+        tableBody.innerHTML =
+            '<tr><td colspan="9">Unable to load retention data.</td></tr>';
+
+        status.textContent = error.message;
+        console.error("Retention Risk Error:", error);
+    }
+}
+
+function filterRetentionCustomers() {
+    const search = document
+        .getElementById("retentionSearch")
+        .value.trim().toLowerCase();
+
+    const selectedRisk = document
+        .getElementById("retentionRiskFilter")
+        .value;
+
+    const filtered = retentionCustomers.filter(customer => {
+        const matchesSearch = String(customer.CustomerID)
+            .toLowerCase().includes(search);
+
+        const matchesRisk =
+            selectedRisk === "All" ||
+            customer.Risk_Level === selectedRisk;
+
+        return matchesSearch && matchesRisk;
+    });
+
+    const tableBody = document.getElementById("retentionTableBody");
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML =
+            '<tr><td colspan="9">No matching customers found.</td></tr>';
+    } else {
+        tableBody.innerHTML = filtered.map(customer => {
+            const riskColors = {
+                High: "#dc2626",
+                Medium: "#d97706",
+                Low: "#15803d"
+            };
+
+            const factors = Array.isArray(customer.Risk_Factors)
+                ? customer.Risk_Factors.join(", ")
+                : "";
+
+            return `
+                <tr>
+                    <td>${escapeRetentionHTML(customer.CustomerID)}</td>
+                    <td>${escapeRetentionHTML(customer.Segment)}</td>
+                    <td>${Number(customer.Recency).toLocaleString()} days</td>
+                    <td>${Number(customer.Frequency).toLocaleString()}</td>
+                    <td>${escapeRetentionHTML(formatMoney(Number(customer.Monetary)))}</td>
+                    <td>${Number(customer.Risk_Score).toFixed(2)}</td>
+                    <td style="font-weight:700; color:${riskColors[customer.Risk_Level] || "#334155"}">
+                        ${escapeRetentionHTML(customer.Risk_Level)}
+                    </td>
+                    <td>${escapeRetentionHTML(factors)}</td>
+                    <td>${escapeRetentionHTML(customer.Retention_Action)}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    document.getElementById("retentionResultCount").textContent =
+        `Showing ${filtered.length.toLocaleString()} of ${retentionCustomers.length.toLocaleString()} customers.`;
+}
 
 
 async function saveDataset() {
