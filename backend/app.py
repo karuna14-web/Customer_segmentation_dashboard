@@ -5,6 +5,9 @@ from pathlib import Path
 import json
 import uuid
 import re
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
+from urllib.parse import quote
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
@@ -330,6 +333,50 @@ def get_customer_data(dataset_id=None):
 def home():
     return send_from_directory(FRONTEND_DIR, "index.html")
 
+
+
+
+@app.route("/api/exchange-rate")
+def exchange_rate():
+    base = request.args.get("base", "").upper().strip()
+    target = request.args.get("target", "").upper().strip()
+
+    allowed_currencies = {"GBP", "INR", "USD", "EUR"}
+
+    if base not in allowed_currencies or target not in allowed_currencies:
+        return jsonify({"error": "Unsupported currency."}), 400
+
+    if base == target:
+        return jsonify({
+            "base": base,
+            "target": target,
+            "rate": 1,
+            "date": None
+        })
+
+    url = "https:" + "/" + "/" + "api.frankfurter.dev" + "/v2/rate/" + base + "/" + target
+
+    try:
+        with urlopen(
+            Request(
+                url,
+                headers={"User-Agent": "CustomerSegmentationDashboard/1.0"}
+            ),
+            timeout=10
+        ) as response:
+            result = json.loads(response.read().decode("utf-8"))
+
+        return jsonify({
+            "base": result["base"],
+            "target": result["quote"],
+            "rate": result["rate"],
+            "date": result["date"]
+        })
+
+    except Exception:
+        return jsonify({
+            "error": "Exchange rate service is temporarily unavailable."
+        }), 503
 
 @app.route("/api/summary")
 def summary():

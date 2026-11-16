@@ -934,7 +934,12 @@ body {
             </select>
 
             <p style="color:#94a3b8; font-size:11px; margin-top:8px;">
-                Display formatting only. No currency conversion.
+                All dashboard amounts are converted using the reference exchange rate.
+            </p>
+
+            <p id="exchangeRateInfo"
+               style="color:#38bdf8; font-size:11px; margin-top:8px; line-height:1.5;">
+                Loading exchange rate...
             </p>
         </div>
 
@@ -1343,7 +1348,10 @@ function showPage(pageName, clickedButton) {
 }
 
 
+let baseCurrency = "GBP";
 let selectedCurrency = "GBP";
+let exchangeRate = 1;
+let exchangeRateDate = null;
 
 const currencyLocales = {
     GBP: "en-GB",
@@ -1352,13 +1360,55 @@ const currencyLocales = {
     EUR: "de-DE"
 };
 
+async function fetchExchangeRate() {
+    const response = await fetch(
+        `/api/exchange-rate?base=${baseCurrency}&target=${selectedCurrency}`
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || "Could not retrieve exchange rate.");
+    }
+
+    const rate = Number(result.rate);
+
+    if (!Number.isFinite(rate) || rate <= 0) {
+        throw new Error("The exchange rate returned by the server is invalid.");
+    }
+
+    exchangeRate = rate;
+    exchangeRateDate = result.date;
+
+    const rateInfo = document.getElementById("exchangeRateInfo");
+
+    if (rateInfo) {
+        const formattedRate = new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 4
+        }).format(exchangeRate);
+
+        if (baseCurrency === selectedCurrency) {
+            rateInfo.textContent =
+                `Same currency selected. 1 ${baseCurrency} = 1 ${selectedCurrency}`;
+        } else {
+            rateInfo.textContent =
+                `1 ${baseCurrency} = ${formattedRate} ${selectedCurrency}` +
+                (exchangeRateDate ? ` | Rate date: ${exchangeRateDate}` : "");
+        }
+    }
+}
+
 function formatMoney(value) {
+    const originalAmount = Number(value) || 0;
+    const convertedAmount = originalAmount * exchangeRate;
+
     return new Intl.NumberFormat(currencyLocales[selectedCurrency], {
         style: "currency",
         currency: selectedCurrency,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }).format(Number(value) || 0);
+    }).format(convertedAmount);
 }
 
 function getCurrencySymbol() {
@@ -1369,9 +1419,28 @@ function getCurrencySymbol() {
       .find(part => part.type === "currency").value;
 }
 
-function updateCurrency() {
-    selectedCurrency = document.getElementById("currencySelect").value;
-    loadDashboard(window.activeDatasetId || "online_retail");
+async function updateCurrency() {
+    const currencySelect = document.getElementById("currencySelect");
+    const previousCurrency = selectedCurrency;
+
+    selectedCurrency = currencySelect.value;
+
+    const loaded = await loadDashboard(
+        window.activeDatasetId || "online_retail"
+    );
+
+    if (!loaded) {
+        selectedCurrency = previousCurrency;
+        currencySelect.value = previousCurrency;
+
+        const rateInfo = document.getElementById("exchangeRateInfo");
+        if (rateInfo) {
+            rateInfo.textContent =
+                "Currency conversion failed. Previous currency restored.";
+        }
+
+        await loadDashboard(window.activeDatasetId || "online_retail");
+    }
 }
 
 let allCustomers = [];
@@ -1540,7 +1609,7 @@ function downloadCustomerReport() {
         "Customer ID",
         "Recency (days)",
         "Invoices",
-        "Total Spending",
+        `Total Spending (${selectedCurrency})`,
         "Segment"
     ];
 
@@ -1548,7 +1617,7 @@ function downloadCustomerReport() {
         c.CustomerID,
         c.Recency,
         c.Frequency,
-        c.Monetary,
+        Number(c.Monetary) * exchangeRate,
         c.Segment
     ]);
 
@@ -1584,6 +1653,14 @@ async function loadDashboard(datasetId = null) {
     const datasetQuery = `?dataset_id=${encodeURIComponent(activeDatasetId)}`;
 
     try {
+        const activeDataset = (window.savedDatasetRecords || []).find(
+            dataset => dataset.id === activeDatasetId
+        );
+
+        baseCurrency = activeDataset?.currency || baseCurrency;
+
+        await fetchExchangeRate();
+
         const [summaryResponse, segmentsResponse, customersResponse] =
             await Promise.all([
                 fetch(`/api/summary${datasetQuery}`),
@@ -1734,7 +1811,9 @@ marker: { color: "#4f46e5" }
 Plotly.newPlot("spendingChart", [{
     type: "pie",
     labels: segmentData.map(s => s.Segment),
-    values: segmentData.map(s => s.Total_Revenue),
+    values: segmentData.map(
+        s => Number(s.Total_Revenue) * exchangeRate
+    ),
     hole: 0.45,
     marker: {
         colors: ["#22d3ee", "#8b5cf6", "#34d399", "#fbbf24"],
@@ -1759,10 +1838,12 @@ Plotly.newPlot("spendingChart", [{
         await loadRetentionRisk(activeDatasetId);
 
         status.textContent = "Dashboard loaded successfully.";
+        return true;
     } catch (error) {
         status.textContent =
             "Could not load dashboard data. Check that the Flask backend is running and inspect its terminal for errors.";
         console.error(error);
+        return false;
     }
 }
 
@@ -2015,14 +2096,7 @@ async function loadSavedDatasets() {
         );
 
         if (activeDataset && activeDataset.currency) {
-            selectedCurrency = activeDataset.currency;
-
-            const currencySelect =
-                document.getElementById("currencySelect");
-
-            if (currencySelect) {
-                currencySelect.value = selectedCurrency;
-            }
+            baseCurrency = activeDataset.currency;
         }
 
         status.textContent =
@@ -2074,14 +2148,7 @@ async function activateDataset() {
         );
 
         if (activeDataset && activeDataset.currency) {
-            selectedCurrency = activeDataset.currency;
-
-            const currencySelect =
-                document.getElementById("currencySelect");
-
-            if (currencySelect) {
-                currencySelect.value = selectedCurrency;
-            }
+            baseCurrency = activeDataset.currency;
         }
 
         await loadDashboard(window.activeDatasetId);
