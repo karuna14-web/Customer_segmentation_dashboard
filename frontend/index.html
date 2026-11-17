@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Segmentation Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js">
+
+// =====================================</script>
     <style>
         body {
     font-family: Arial, sans-serif;
@@ -882,6 +884,131 @@ body {
         color: #67e8f9 !important;
     }
 
+
+
+/* =====================================
+   GUIDED TOUR - MIDNIGHT NEON THEME
+===================================== */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+#startTourButton {
+    background: linear-gradient(135deg, #06b6d4, #7c3aed);
+    color: #ffffff;
+    border: 1px solid rgba(103, 232, 249, 0.45);
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(34, 211, 238, 0.16);
+}
+
+#startTourButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.3);
+}
+
+#tourBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(2, 6, 23, 0.18);
+}
+
+#tourSpotlight {
+    position: fixed;
+    z-index: 9999;
+    border: 2px solid #67e8f9;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.30),
+                0 0 24px rgba(34, 211, 238, 0.55);
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+
+#tourCard {
+    position: fixed;
+    z-index: 10000;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: min(520px, calc(100% - 32px));
+    padding: 22px;
+    border: 1px solid rgba(103, 232, 249, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #172746, #29204b);
+    color: #e6edff;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.5);
+}
+
+#tourCard h2 {
+    color: #67e8f9;
+    font-size: 21px;
+    margin: 8px 0;
+}
+
+#tourCard p {
+    color: #f1f5f9;
+    line-height: 1.65;
+    margin: 8px 0 16px;
+}
+
+#tourStepCount {
+    color: #a78bfa;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.tour-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tour-actions button {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+    padding: 9px 14px;
+    color: #e6edff;
+    background: #263451;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tour-actions button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.tour-actions #tourNext {
+    background: linear-gradient(135deg, #0891b2, #6d28d9);
+    border: none;
+}
+
+@media (max-width: 600px) {
+    #tourCard {
+        bottom: 12px;
+        padding: 17px;
+    }
+
+    #tourCard h2 {
+        font-size: 18px;
+    }
+
+    #startTourButton {
+        padding: 9px 13px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -954,6 +1081,9 @@ body {
                 <h1>Customer Segmentation Dashboard</h1>
                 <p>Understand customer behaviour using RFM analysis and K-Means clustering.</p>
             </div>
+            <button id="startTourButton" type="button" onclick="startDashboardTour()">
+                ✨ Take a Tour
+            </button>
         </header>
 
         <main class="page-content">
@@ -2445,6 +2575,265 @@ async function initializeDashboard() {
 }
 
 initializeDashboard();
+
+// GUIDED TOUR - DASHBOARD FUNCTIONALITY
+// =====================================
+
+const dashboardTourSteps = [
+    {
+        page: "overview",
+        target: null,
+        title: "Welcome to Customer Insights!",
+        description: "This dashboard helps businesses understand customer behaviour using RFM analysis and K-Means clustering. Let's explore its features step by step."
+    },
+    {
+        page: "overview",
+        target: "#customers",
+        title: "Dashboard Overview",
+        description: "Start here for a quick business summary. See the total number of customers, total spending, average spending and purchase frequency. The charts below help you understand customer distribution and revenue."
+    },
+    {
+        page: "segments",
+        target: "#segmentDescriptions",
+        title: "Customer Segments",
+        description: "K-Means clustering groups customers with similar purchasing behaviour into four segments: High Value, Loyal Customers, Needs Attention and Regular Customers. Businesses can use these groups to plan different marketing strategies."
+    },
+    {
+        page: "segments",
+        target: "#explorerSegment",
+        title: "Explore Individual Segments",
+        description: "Select a customer segment to inspect its behaviour and performance. You can understand the segment's RFM characteristics and view recommendations for engaging those customers."
+    },
+    {
+        page: "explorer",
+        target: "#customerSearch",
+        title: "Customer Explorer",
+        description: "Find individual customers using the search field and filter the customer list by segment. Explore customer records and select a customer to view their profile and purchasing information."
+    },
+    {
+        page: "analytics",
+        target: "#page-analytics .page-heading",
+        title: "Analytics and Methodology",
+        description: "Learn how RFM analysis works: Recency measures how recently a customer purchased, Frequency measures how often they purchased, and Monetary measures how much they spent. K-Means uses these behavioural patterns to form customer groups."
+    },
+    {
+        page: "reports",
+        target: '#page-reports button[onclick*="downloadCustomerReport"]',
+        title: "Download Reports",
+        description: "Use this feature to download a CSV customer report. You can use the exported data for further analysis, record keeping and business reporting."
+    },
+    {
+        page: "datasets",
+        target: "#datasetFile",
+        title: "Dataset Management",
+        description: "Upload a supported customer transaction CSV, map its columns, inspect the data preview and save the dataset. You can also manage and activate saved datasets."
+    },
+    {
+        page: "retention",
+        target: "#retentionRiskChart",
+        title: "Retention and Churn Risk",
+        description: "This section helps identify customers who may stop purchasing. Review the risk distribution, search customers and filter risk levels. Businesses can use these insights to plan retention campaigns. Risk estimates are indicators, not guaranteed predictions."
+    },
+    {
+        page: "overview",
+        target: "#currencySelect",
+        title: "Currency Settings",
+        description: "Change the dashboard's display currency between GBP, INR, USD and EUR. The dashboard converts displayed monetary amounts using its reference exchange rate."
+    }
+];
+
+let currentTourStep = 0;
+let dashboardTourActive = false;
+
+function updateTourSpotlight() {
+    if (!dashboardTourActive) return;
+
+    const step = dashboardTourSteps[currentTourStep];
+    const spotlight = document.getElementById("tourSpotlight");
+
+    if (!step || !step.target) {
+        spotlight.hidden = true;
+        return;
+    }
+
+    const target = document.querySelector(step.target);
+
+    if (!target || !target.getClientRects().length) {
+        spotlight.hidden = true;
+        return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const padding = 7;
+
+    spotlight.style.left = Math.max(4, rect.left - padding) + "px";
+    spotlight.style.top = Math.max(4, rect.top - padding) + "px";
+    spotlight.style.width = Math.max(0, Math.min(
+        rect.width + padding * 2,
+        window.innerWidth - Math.max(4, rect.left - padding)
+    )) + "px";
+    spotlight.style.height = Math.max(0, Math.min(
+        rect.height + padding * 2,
+        window.innerHeight - Math.max(4, rect.top - padding)
+    )) + "px";
+
+    spotlight.hidden = false;
+}
+
+function renderDashboardTourStep() {
+    const step = dashboardTourSteps[currentTourStep];
+
+    if (!step) return;
+
+    const navButtons = [...document.querySelectorAll(".nav-item")];
+    const navButton = navButtons.find(button =>
+        (button.getAttribute("onclick") || "").includes(
+            "showPage('" + step.page + "'"
+        )
+    );
+
+    showPage(step.page, navButton || null);
+
+    document.getElementById("tourStepCount").textContent =
+        "STEP " + (currentTourStep + 1) + " OF " + dashboardTourSteps.length;
+
+    document.getElementById("tourTitle").textContent = step.title;
+    document.getElementById("tourDescription").textContent = step.description;
+
+    document.getElementById("tourBack").disabled = currentTourStep === 0;
+    document.getElementById("tourNext").textContent =
+        currentTourStep === dashboardTourSteps.length - 1
+            ? "Finish"
+            : "Next";
+
+    document.getElementById("tourBackdrop").hidden = false;
+    document.getElementById("tourCard").hidden = false;
+
+    const spotlight = document.getElementById("tourSpotlight");
+
+    if (!step.target) {
+        spotlight.hidden = true;
+        return;
+    }
+
+    const target = document.querySelector(step.target);
+
+    if (!target) {
+        spotlight.hidden = true;
+        document.getElementById("tourDescription").textContent +=
+            " This feature is not currently visible in this dashboard version.";
+        return;
+    }
+
+    target.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest"
+    });
+
+    setTimeout(updateTourSpotlight, 350);
+}
+
+function startDashboardTour() {
+    currentTourStep = 0;
+    dashboardTourActive = true;
+
+    document.getElementById("tourBackdrop").hidden = false;
+    document.getElementById("tourCard").hidden = false;
+
+    renderDashboardTourStep();
+}
+
+function nextTourStep() {
+    if (currentTourStep < dashboardTourSteps.length - 1) {
+        currentTourStep++;
+        renderDashboardTourStep();
+    } else {
+        finishDashboardTour();
+    }
+}
+
+function previousTourStep() {
+    if (currentTourStep > 0) {
+        currentTourStep--;
+        renderDashboardTourStep();
+    }
+}
+
+function finishDashboardTour() {
+    dashboardTourActive = false;
+
+    document.getElementById("tourBackdrop").hidden = true;
+    document.getElementById("tourSpotlight").hidden = true;
+    document.getElementById("tourCard").hidden = true;
+
+    try {
+        localStorage.setItem("customerSegmentationTourSeen_v1", "true");
+    } catch (error) {
+        console.warn("Could not save tour completion:", error);
+    }
+
+    // Return the visitor to the Overview page.
+    const overviewButton = [...document.querySelectorAll(".nav-item")]
+        .find(button =>
+            (button.getAttribute("onclick") || "").includes("showPage('overview'")
+        );
+
+    showPage("overview", overviewButton || null);
+}
+
+function skipDashboardTour() {
+    finishDashboardTour();
+}
+
+// Keep the spotlight aligned when the visitor scrolls or resizes.
+window.addEventListener("scroll", updateTourSpotlight, true);
+window.addEventListener("resize", updateTourSpotlight);
+
+// Automatically start the tour for first-time visitors.
+window.addEventListener("load", function () {
+    let tourSeen = false;
+
+    try {
+        tourSeen = localStorage.getItem(
+            "customerSegmentationTourSeen_v1"
+        ) === "true";
+    } catch (error) {
+        console.warn("Could not read tour preference:", error);
+    }
+
+    if (!tourSeen) {
+        setTimeout(startDashboardTour, 1000);
+    }
+});
+
+// End guided tour
 </script>
+
+<!-- GUIDED TOUR HTML -->
+<div id="tourBackdrop" hidden></div>
+<div id="tourSpotlight" hidden></div>
+
+<div id="tourCard" role="dialog" aria-modal="true"
+     aria-labelledby="tourTitle" hidden>
+    <div id="tourStepCount">WELCOME</div>
+    <h2 id="tourTitle">Welcome to Customer Insights!</h2>
+    <p id="tourDescription">
+        Explore your dashboard and learn how each feature helps you
+        understand customer behaviour.
+    </p>
+
+    <div class="tour-actions">
+        <button type="button" onclick="skipDashboardTour()">Skip Tour</button>
+        <div style="display:flex; gap:8px;">
+            <button type="button" id="tourBack"
+                    onclick="previousTourStep()">Back</button>
+            <button type="button" id="tourNext"
+                    onclick="nextTourStep()">Next</button>
+        </div>
+    </div>
+</div>
+<!-- END GUIDED TOUR HTML -->
+
 </body>
 </html>
