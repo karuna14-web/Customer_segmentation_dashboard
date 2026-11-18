@@ -1,7 +1,10 @@
 
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, session, redirect
+import os
+import auth_db
 import pandas as pd
 from pathlib import Path
+from functools import wraps
 import json
 import uuid
 import re
@@ -12,6 +15,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+auth_db.init_auth_db()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = BASE_DIR / "data" / "processed" / "cleaned_data.csv"
@@ -44,12 +53,17 @@ def load_dataset_registry():
 
 
 def get_dataset_path(dataset_id=None):
-    """Resolve a registered dataset ID to a safe project file path."""
+    """Resolve a dataset only when the logged-in user can access it."""
+
+    user_id = session.get("user_id")
+
+    if not user_id:
+        raise ValueError("Authentication required.")
+
     registry = load_dataset_registry()
 
-    selected_id = dataset_id or registry.get(
-        "active_dataset", "online_retail"
-    )
+    # Use the current user's active dataset when no ID is supplied.
+    selected_id = dataset_id or auth_db.get_active_dataset(user_id)
 
     dataset = next(
         (
@@ -62,6 +76,17 @@ def get_dataset_path(dataset_id=None):
     if dataset is None:
         raise ValueError("Selected dataset was not found.")
 
+    # Online Retail is the only shared dataset.
+    is_shared_dataset = (
+        dataset.get("id") == "online_retail"
+        and dataset.get("owner_id") is None
+    )
+
+    is_owned_dataset = dataset.get("owner_id") == user_id
+
+    if not is_shared_dataset and not is_owned_dataset:
+        raise ValueError("You do not have access to this dataset.")
+
     dataset_path = (BASE_DIR / dataset["path"]).resolve()
 
     try:
@@ -73,10 +98,6 @@ def get_dataset_path(dataset_id=None):
         raise FileNotFoundError("Dataset file does not exist.")
 
     return dataset_path
-
-
-
-
 
 
 def inspect_uploaded_csv(file_path, mapping=None):
@@ -329,9 +350,51 @@ def get_customer_data(dataset_id=None):
     return rfm
 
 
+
+
+def login_required(view_function):
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        user_id = session.get("user_id")
+
+        if not user_id or not auth_db.get_user_by_id(user_id):
+            session.clear()
+            return jsonify({"error": "Authentication required."}), 401
+
+        return view_function(*args, **kwargs)
+
+    return wrapped_view
+
+
 @app.route("/")
 def home():
+    user_id = session.get("user_id")
+
+    if not user_id or not auth_db.get_user_by_id(user_id):
+        session.clear()
+        return redirect("/login")
+
     return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/login")
+def login_page():
+    user_id = session.get("user_id")
+
+    if user_id and auth_db.get_user_by_id(user_id):
+        return redirect("/")
+
+    return send_from_directory(FRONTEND_DIR, "login.html")
+
+
+@app.route("/register")
+def register_page():
+    user_id = session.get("user_id")
+
+    if user_id and auth_db.get_user_by_id(user_id):
+        return redirect("/")
+
+    return send_from_directory(FRONTEND_DIR, "register.html")
 
 
 
@@ -378,20 +441,42 @@ def exchange_rate():
             "error": "Exchange rate service is temporarily unavailable."
         }), 503
 
-@app.route("/api/summary")
-def summary():
-    rfm = get_customer_data(request.args.get("dataset_id"))
+def handle_dataset_errors(view_function):
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        try:
+            return view_function(*args, **kwargs)
+        except ValueError as error:
+            return jsonify({"error": str(error)}), 403
+        except FileNotFoundError:
+            return jsonify({"error": "Dataset file not found."}), 404
+    return wrapped_view
 
-    return jsonify({
-        "total_customers": int(len(rfm)),
-        "total_revenue": round(float(rfm["Monetary"].sum()), 2),
-        "average_spending": round(float(rfm["Monetary"].mean()), 2),
-        "average_frequency": round(float(rfm["Frequency"].mean()), 2)
-    })
+
+@app.route("/api/summary")
+@login_required
+def summary():
+    try:
+        rfm = get_customer_data(request.args.get("dataset_id"))
+
+        return jsonify({
+            "total_customers": int(len(rfm)),
+            "total_revenue": round(float(rfm["Monetary"].sum()), 2),
+            "average_spending": round(float(rfm["Monetary"].mean()), 2),
+            "average_frequency": round(float(rfm["Frequency"].mean()), 2)
+        })
+
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 403
+
+    except FileNotFoundError:
+        return jsonify({"error": "Dataset file not found."}), 404
 
 
 
 @app.route("/api/segments")
+@login_required
+@handle_dataset_errors
 def segments():
     rfm = get_customer_data(request.args.get("dataset_id"))
 
@@ -419,6 +504,8 @@ def segments():
 
 
 @app.route("/api/customers")
+@login_required
+@handle_dataset_errors
 def customers():
     rfm = get_customer_data(request.args.get("dataset_id"))
     rfm = rfm.sort_values("Monetary", ascending=False)
@@ -433,6 +520,8 @@ def customers():
 
 
 @app.route("/api/retention-risk")
+@login_required
+@handle_dataset_errors
 def retention_risk():
     dataset_id = request.args.get("dataset_id")
     rfm = get_customer_data(dataset_id).copy()
@@ -535,8 +624,30 @@ def retention_risk():
 
 
 @app.route("/api/datasets", methods=["GET"])
+@login_required
 def datasets():
+    user_id = session["user_id"]
     registry = load_dataset_registry()
+
+    # Show only this user's datasets and the shared Online Retail dataset.
+    accessible = [
+        item for item in registry["datasets"]
+        if (
+            item.get("owner_id") == user_id
+            or (
+                item.get("id") == "online_retail"
+                and item.get("owner_id") is None
+            )
+        )
+    ]
+
+    accessible_ids = {item["id"] for item in accessible}
+    active_dataset = auth_db.get_active_dataset(user_id)
+
+    # Recover safely if the saved active dataset is no longer accessible.
+    if active_dataset not in accessible_ids:
+        active_dataset = "online_retail"
+        auth_db.set_active_dataset(user_id, active_dataset)
 
     return jsonify({
         "datasets": [
@@ -546,13 +657,13 @@ def datasets():
                 "type": item.get("type", "uploaded"),
                 "currency": item.get("currency", "GBP")
             }
-            for item in registry["datasets"]
+            for item in accessible
         ],
-        "active_dataset": registry.get("active_dataset", "online_retail")
+        "active_dataset": active_dataset
     })
 
-
 @app.route("/api/datasets/activate", methods=["POST"])
+@login_required
 def activate_dataset():
     data = request.get_json(silent=True) or {}
     dataset_id = data.get("dataset_id")
@@ -561,31 +672,26 @@ def activate_dataset():
         return jsonify({"error": "A valid dataset_id is required."}), 400
 
     try:
-        # Verify the dataset exists and its file is available.
         get_dataset_path(dataset_id)
 
-        registry = load_dataset_registry()
-        registry["active_dataset"] = dataset_id
+    except FileNotFoundError:
+        return jsonify({"error": "Dataset not found."}), 404
 
-        temporary_path = REGISTRY_PATH.with_suffix(".tmp")
+    except ValueError as error:
+        if str(error) == "You do not have access to this dataset.":
+            return jsonify({"error": str(error)}), 403
 
-        with open(temporary_path, "w", encoding="utf-8") as file:
-            json.dump(registry, file, indent=4)
+        return jsonify({"error": str(error)}), 404
 
-        temporary_path.replace(REGISTRY_PATH)
+    auth_db.set_active_dataset(session["user_id"], dataset_id)
 
-        return jsonify({
-            "message": "Dataset activated successfully.",
-            "active_dataset": dataset_id
-        })
-
-    except (ValueError, FileNotFoundError):
-        return jsonify({"error": "Dataset not found or unavailable."}), 404
-
-
-
+    return jsonify({
+        "message": "Dataset activated successfully.",
+        "active_dataset": dataset_id
+    })
 
 @app.route("/api/datasets/upload", methods=["POST"])
+@login_required
 def upload_dataset():
     if "file" not in request.files:
         return jsonify({"error": "Please select a CSV file."}), 400
@@ -600,6 +706,7 @@ def upload_dataset():
 
     temporary_id = uuid.uuid4().hex
     temporary_path = UPLOAD_DIR / f"{temporary_id}.csv"
+    metadata_path = UPLOAD_DIR / f"{temporary_id}.json"
 
     try:
         uploaded_file.save(temporary_path)
@@ -622,6 +729,10 @@ def upload_dataset():
 
         result = inspect_uploaded_csv(temporary_path, mapping)
 
+        # Associate this temporary upload with the logged-in user.
+        with open(metadata_path, "w", encoding="utf-8") as file:
+            json.dump({"owner_id": session["user_id"]}, file)
+
         return jsonify({
             "upload_id": temporary_id,
             "filename": uploaded_file.filename,
@@ -634,16 +745,19 @@ def upload_dataset():
 
     except ValueError as error:
         temporary_path.unlink(missing_ok=True)
+        metadata_path.unlink(missing_ok=True)
         return jsonify({"error": str(error)}), 400
 
     except Exception:
         temporary_path.unlink(missing_ok=True)
+        metadata_path.unlink(missing_ok=True)
         return jsonify({
             "error": "Could not process the uploaded CSV."
         }), 400
 
 
 @app.route("/api/datasets/save", methods=["POST"])
+@login_required
 def save_dataset():
     data = request.get_json(silent=True) or {}
 
@@ -667,9 +781,25 @@ def save_dataset():
         return jsonify({"error": "Unsupported currency."}), 400
 
     temporary_path = UPLOAD_DIR / f"{upload_id}.csv"
+    metadata_path = UPLOAD_DIR / f"{upload_id}.json"
 
-    if not temporary_path.is_file():
-        return jsonify({"error": "Uploaded file not found. Please upload again."}), 404
+    if not temporary_path.is_file() or not metadata_path.is_file():
+        return jsonify({
+            "error": "Uploaded file not found or expired. Please upload again."
+        }), 404
+
+    try:
+        with open(metadata_path, "r", encoding="utf-8") as file:
+            upload_metadata = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return jsonify({
+            "error": "Upload ownership could not be verified. Please upload again."
+        }), 403
+
+    if upload_metadata.get("owner_id") != session["user_id"]:
+        return jsonify({
+            "error": "You do not have permission to save this upload."
+        }), 403
 
     dataset_id = uuid.uuid4().hex
     final_path = DATASETS_DIR / f"{dataset_id}.csv"
@@ -692,6 +822,7 @@ def save_dataset():
             "name": dataset_name,
             "path": f"data/datasets/{dataset_id}.csv",
             "type": "uploaded",
+            "owner_id": session["user_id"],
             "currency": currency,
             "mapping": result["mapping"],
             "row_count": result["row_count"],
@@ -705,6 +836,7 @@ def save_dataset():
 
         registry_temp.replace(REGISTRY_PATH)
         temporary_path.unlink(missing_ok=True)
+        metadata_path.unlink(missing_ok=True)
 
         return jsonify({
             "message": "Dataset saved successfully.",
@@ -725,6 +857,96 @@ def save_dataset():
         final_path.unlink(missing_ok=True)
         return jsonify({"error": "Could not save the dataset."}), 500
 
+
+
+
+# ================= AUTHENTICATION ROUTES =================
+
+@app.route("/api/auth/register", methods=["POST"])
+def register():
+    if auth_db.get_setting("registration_open", "0") != "1":
+        return jsonify({"error": "Registration is currently closed."}), 403
+
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = data.get("password", "")
+
+    if not name or len(name) > 80:
+        return jsonify({"error": "Enter a valid name (maximum 80 characters)."}), 400
+
+    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email) or len(email) > 254:
+        return jsonify({"error": "Enter a valid email address."}), 400
+
+    if not isinstance(password, str) or len(password) < 12 or len(password) > 128:
+        return jsonify({"error": "Password must contain 12 to 128 characters."}), 400
+
+    try:
+        user_id = auth_db.create_user(name, email, password, role="user")
+        return jsonify({"message": "Account created successfully.", "user_id": user_id}), 201
+    except Exception:
+        return jsonify({"error": "An account with this email may already exist."}), 409
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    password = data.get("password", "")
+
+    if not email or not isinstance(password, str):
+        return jsonify({"error": "Email and password are required."}), 400
+
+    user = auth_db.get_user_by_email(email)
+
+    if not user or not auth_db.verify_password(user, password):
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    session.clear()
+    session["user_id"] = user["id"]
+    session["role"] = user["role"]
+
+    return jsonify({
+        "message": "Login successful.",
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "role": user["role"]
+        }
+    }), 200
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"message": "Logout successful."}), 200
+
+
+@app.route("/api/auth/me", methods=["GET"])
+def current_user():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return jsonify({"authenticated": False}), 401
+
+    user = auth_db.get_user_by_id(user_id)
+
+    if not user:
+        session.clear()
+        return jsonify({"authenticated": False}), 401
+
+    return jsonify({
+        "authenticated": True,
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "role": user["role"]
+        }
+    }), 200
+
+# ================= END AUTHENTICATION ROUTES =================
 
 
 if __name__ == "__main__":

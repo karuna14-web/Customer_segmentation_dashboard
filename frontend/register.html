@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#172554">
+    <title>Create Account | Customer Insights</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 36px;
+            border-radius: 20px;
+            border: 1px solid #e8edf5;
+            box-shadow: 0 12px 35px rgba(23, 37, 84, 0.10);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .brand-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 14px;
+            display: grid;
+            place-items: center;
+            background: #172554;
+            color: white;
+            border-radius: 16px;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        h1 {
+            margin: 0 0 9px;
+            color: #172554;
+            font-size: 25px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin: 16px 0 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .password-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .password-wrap input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toggle {
+            padding: 0 11px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .hint {
+            margin-top: 7px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .register-button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #172554;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .register-button:hover { background: #1e40af; }
+        .register-button:disabled { opacity: 0.65; cursor: wait; }
+
+        #message {
+            display: none;
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 9px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        #message.error {
+            display: block;
+            color: #991b1b;
+            background: #fef2f2;
+        }
+
+        #message.success {
+            display: block;
+            color: #166534;
+            background: #f0fdf4;
+        }
+
+        .footer {
+            margin-top: 23px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            .register-card { padding: 27px 21px; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="register-card">
+        <div class="brand">
+            <div class="brand-icon">C</div>
+            <h1>Create Your Account</h1>
+            <div class="subtitle">
+                Register to access your customer insights dashboard.
+            </div>
+        </div>
+
+        <form id="registerForm">
+            <label for="name">Full Name</label>
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your full name"
+                maxlength="80"
+                autocomplete="name"
+                required
+            >
+
+            <label for="email">Email Address</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                maxlength="254"
+                autocomplete="email"
+                required
+            >
+
+            <label for="password">Password</label>
+            <div class="password-wrap">
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Create a password"
+                    minlength="12"
+                    maxlength="128"
+                    autocomplete="new-password"
+                    required
+                >
+                <button class="toggle" type="button" data-target="password">
+                    Show
+                </button>
+            </div>
+            <div class="hint">At least 12 characters, including uppercase, lowercase and a number.</div>
+
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-wrap">
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    placeholder="Re-enter your password"
+                    autocomplete="new-password"
+                    required
+                >
+                <button class="toggle" type="button" data-target="confirmPassword">
+                    Show
+                </button>
+            </div>
+
+            <button class="register-button" type="submit" id="registerButton">
+                Create Account
+            </button>
+
+            <div id="message" role="alert" aria-live="polite"></div>
+        </form>
+
+        <div class="footer">
+            Already registered?
+            <a href="/login">Sign in</a>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById("registerForm");
+        const message = document.getElementById("message");
+        const registerButton = document.getElementById("registerButton");
+
+        document.querySelectorAll(".toggle").forEach(button => {
+            button.addEventListener("click", function () {
+                const input = document.getElementById(this.dataset.target);
+                const showing = input.type === "text";
+                input.type = showing ? "password" : "text";
+                this.textContent = showing ? "Show" : "Hide";
+            });
+        });
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            message.className = "";
+            message.textContent = "";
+
+            if (password !== confirmPassword) {
+                message.textContent = "Passwords do not match.";
+                message.className = "error";
+                return;
+            }
+
+            if (password.length < 12 || password.length > 128 ||
+                !/[A-Z]/.test(password) ||
+                !/[a-z]/.test(password) ||
+                !/[0-9]/.test(password)) {
+                message.textContent =
+                    "Password must be 12–128 characters and include uppercase, lowercase and a number.";
+                message.className = "error";
+                return;
+            }
+
+            registerButton.disabled = true;
+            registerButton.textContent = "Creating account...";
+
+            try {
+                const response = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || "Registration failed.");
+                }
+
+                message.textContent =
+                    "Account created successfully. Please sign in.";
+                message.className = "success";
+
+                form.reset();
+
+            } catch (error) {
+                message.textContent = error.message || "Unable to connect. Try again.";
+                message.className = "error";
+            } finally {
+                registerButton.disabled = false;
+                registerButton.textContent = "Create Account";
+            }
+        });
+    </script>
+</body>
+</html>

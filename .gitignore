@@ -24,3 +24,8 @@ __pycache__/
 *.backup
 *.backup*
 index_before_*.html
+/data/metadata/users.db
+/data/metadata/users.db-journal
+/data/metadata/users.db-wal
+/data/metadata/users.db-shm
+/.flask_secret_key
