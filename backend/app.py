@@ -13,6 +13,7 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import quote
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 app = Flask(__name__)
 
@@ -269,6 +270,50 @@ def inspect_uploaded_csv(file_path, mapping=None):
     }
 
 
+
+def evaluate_clustering(features):
+    """Compare K values using inertia and silhouette score."""
+
+    results = []
+    total_customers = len(features)
+
+    max_k = min(8, total_customers - 1)
+
+    for k in range(2, max_k + 1):
+        model = KMeans(
+            n_clusters=k,
+            random_state=42,
+            n_init=10
+        )
+
+        cluster_labels = model.fit_predict(features)
+
+        score = silhouette_score(
+            features,
+            cluster_labels,
+            sample_size=min(1000, total_customers),
+            random_state=42
+        )
+
+        results.append({
+            "k": int(k),
+            "inertia": round(float(model.inertia_), 2),
+            "silhouette_score": round(float(score), 4)
+        })
+
+    best_silhouette_k = max(
+        results,
+        key=lambda item: item["silhouette_score"]
+    )["k"]
+
+    return {
+        "selected_k": 4,
+        "best_silhouette_k": int(best_silhouette_k),
+        "silhouette_sample_size": min(1000, total_customers),
+        "evaluations": results
+    }
+
+
 def get_customer_data(dataset_id=None):
     dataset_path = get_dataset_path(dataset_id)
     df = pd.read_csv(dataset_path)
@@ -499,6 +544,85 @@ def segments():
 
     return jsonify({
         "segments": result.round(2).to_dict(orient="records")
+    })
+
+
+
+@app.route("/api/ml-analysis")
+@login_required
+@handle_dataset_errors
+def ml_analysis():
+    rfm = get_customer_data(request.args.get("dataset_id"))
+
+    features = StandardScaler().fit_transform(
+        rfm[["Recency", "Frequency", "Monetary"]]
+    )
+
+    evaluation = evaluate_clustering(features)
+
+    profiles = rfm.groupby("Segment").agg(
+        Customers=("CustomerID", "count"),
+        Average_Recency=("Recency", "mean"),
+        Average_Frequency=("Frequency", "mean"),
+        Average_Monetary=("Monetary", "mean")
+    ).reset_index()
+
+    # Rank segment averages to create distinct RFM interpretations.
+    profiles["Recency_Rank"] = profiles["Average_Recency"].rank(
+        ascending=True, pct=True
+    )
+    profiles["Frequency_Rank"] = profiles["Average_Frequency"].rank(
+        ascending=True, pct=True
+    )
+    profiles["Monetary_Rank"] = profiles["Average_Monetary"].rank(
+        ascending=True, pct=True
+    )
+
+    def interpret_profile(row):
+        recency_text = (
+            "Recent purchases"
+            if row["Recency_Rank"] <= 0.25
+            else "Longer time since purchase"
+            if row["Recency_Rank"] >= 0.75
+            else "Moderate purchase recency"
+        )
+
+        frequency_text = (
+            "High purchase frequency"
+            if row["Frequency_Rank"] >= 0.75
+            else "Low purchase frequency"
+            if row["Frequency_Rank"] <= 0.25
+            else "Moderate purchase frequency"
+        )
+
+        monetary_text = (
+            "High spending"
+            if row["Monetary_Rank"] >= 0.75
+            else "Low spending"
+            if row["Monetary_Rank"] <= 0.25
+            else "Moderate spending"
+        )
+
+        return (
+            f"{recency_text} | "
+            f"{frequency_text} | "
+            f"{monetary_text}"
+        )
+
+    profiles["RFM_Interpretation"] = profiles.apply(
+        interpret_profile,
+        axis=1
+    )
+
+    profiles = profiles.drop(
+        columns=["Recency_Rank", "Frequency_Rank", "Monetary_Rank"]
+    )
+
+    return jsonify({
+        "clustering": evaluation,
+        "segment_profiles": profiles.round(2).to_dict(
+            orient="records"
+        )
     })
 
 

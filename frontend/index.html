@@ -1203,6 +1203,56 @@ body {
     <h2>Customer Segment Overview</h2>
     <div id="segmentDescriptions"></div>
 </section>
+
+<section class="panel" style="margin-top: 20px">
+    <h2>ML Model Analysis</h2>
+
+    <p>
+        Explore how different cluster counts perform using the Elbow Method
+        and Silhouette Score.
+    </p>
+
+    <div id="kSelectionSummary" class="recommendation-card"
+         style="margin: 15px 0;">
+        Loading clustering evaluation...
+    </div>
+
+    <div style="display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;">
+        <div>
+            <h3>Elbow Method</h3>
+            <div id="elbowChart"></div>
+        </div>
+        <div>
+            <h3>Silhouette Score</h3>
+            <div id="silhouetteChart"></div>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 25px;">RFM Segment Profiles</h3>
+    <div style="overflow-x: auto;">
+        <table id="rfmProfileTable"
+               style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Segment</th>
+                    <th>Customers</th>
+                    <th>Avg. Recency (days)</th>
+                    <th>Avg. Frequency</th>
+                    <th>Avg. Monetary</th>
+                    <th>RFM Interpretation</th>
+                </tr>
+            </thead>
+            <tbody id="rfmProfileBody">
+                <tr>
+                    <td colspan="6">Loading RFM profiles...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
                 <section class="panel" style="margin-top: 20px">
     <h2>Customer Segment Recommendations</h2>
     <div id="recommendations"></div>
@@ -1946,22 +1996,108 @@ async function loadDashboard(datasetId = null) {
 
         await fetchExchangeRate();
 
-        const [summaryResponse, segmentsResponse, customersResponse] =
-            await Promise.all([
-                fetch(`/api/summary${datasetQuery}`),
-                fetch(`/api/segments${datasetQuery}`),
-                fetch(`/api/customers${datasetQuery}`)
-            ]);
+        const [
+            summaryResponse,
+            segmentsResponse,
+            customersResponse,
+            mlResponse
+        ] = await Promise.all([
+            fetch(`/api/summary${datasetQuery}`),
+            fetch(`/api/segments${datasetQuery}`),
+            fetch(`/api/customers${datasetQuery}`),
+            fetch(`/api/ml-analysis${datasetQuery}`)
+        ]);
 
         if (!summaryResponse.ok || !segmentsResponse.ok ||
-            !customersResponse.ok) {
+            !customersResponse.ok || !mlResponse.ok) {
             throw new Error("The backend returned an error.");
         }
 
         const summary = await summaryResponse.json();
         const segmentData = (await segmentsResponse.json()).segments;
         const customerData = (await customersResponse.json()).customers;
+        const mlData = await mlResponse.json();
         allCustomers = customerData;
+
+        // Display K-selection evaluation.
+        const evaluations = mlData.clustering.evaluations;
+        const selectedK = mlData.clustering.selected_k;
+        const bestSilhouetteK = mlData.clustering.best_silhouette_k;
+
+        document.getElementById("kSelectionSummary").innerHTML = `
+            <h3>Current clustering choice: K = ${selectedK}</h3>
+            <p>
+                The highest Silhouette Score was obtained at
+                K = ${bestSilhouetteK}.
+                The current dashboard uses K = ${selectedK} to retain
+                four detailed, business-oriented customer segments.
+            </p>
+            <p>
+                The Elbow chart shows how clustering inertia decreases
+                as K increases. The Silhouette chart compares cluster
+                separation and cohesion.
+            </p>
+            <p>
+                <strong>Note:</strong> The selected business segmentation
+                and the highest-scoring Silhouette value are not the same.
+            </p>
+        `;
+
+        const chartLayout = {
+            paper_bgcolor: "#151f35",
+            plot_bgcolor: "#151f35",
+            font: { color: "#e6edff" },
+            margin: { t: 25, b: 50, l: 60, r: 20 },
+            xaxis: {
+                title: "Number of Clusters (K)",
+                dtick: 1,
+                gridcolor: "rgba(148,163,184,0.16)"
+            },
+            yaxis: {
+                gridcolor: "rgba(148,163,184,0.16)"
+            }
+        };
+
+        Plotly.newPlot("elbowChart", [{
+            x: evaluations.map(item => item.k),
+            y: evaluations.map(item => item.inertia),
+            type: "scatter",
+            mode: "lines+markers",
+            name: "Inertia"
+        }], {
+            ...chartLayout,
+            yaxis: {
+                ...chartLayout.yaxis,
+                title: "Inertia"
+            }
+        }, { responsive: true });
+
+        Plotly.newPlot("silhouetteChart", [{
+            x: evaluations.map(item => item.k),
+            y: evaluations.map(item => item.silhouette_score),
+            type: "scatter",
+            mode: "lines+markers",
+            name: "Silhouette Score"
+        }], {
+            ...chartLayout,
+            yaxis: {
+                ...chartLayout.yaxis,
+                title: "Silhouette Score"
+            }
+        }, { responsive: true });
+
+        // Display average RFM values and interpretations.
+        document.getElementById("rfmProfileBody").innerHTML =
+            mlData.segment_profiles.map(profile => `
+                <tr>
+                    <td>${profile.Segment}</td>
+                    <td>${Number(profile.Customers).toLocaleString()}</td>
+                    <td>${Number(profile.Average_Recency).toFixed(2)}</td>
+                    <td>${Number(profile.Average_Frequency).toFixed(2)}</td>
+                    <td>${formatMoney(profile.Average_Monetary)}</td>
+                    <td>${profile.RFM_Interpretation}</td>
+                </tr>
+            `).join("");
 
 const descriptions = {
     "High Value": "Customers who purchase frequently and generate high revenue.",
