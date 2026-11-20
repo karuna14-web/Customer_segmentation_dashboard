@@ -104,3 +104,12 @@ This project demonstrates the use of machine learning, data analysis, data visua
 ---
 
 Developed as a college project.
+
+
+## Dashboard Screenshots
+
+### Main Dashboard
+![Main Dashboard](screenshots/dashboard.png)
+
+### Customer Segmentation & ML Analysis
+![Segments Page](screenshots/segments.png)
