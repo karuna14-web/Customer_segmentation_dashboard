@@ -1,5 +1,6 @@
 
 from flask import Flask, jsonify, send_from_directory, request, session, redirect
+from authlib.integrations.flask_client import OAuth
 import os
 import auth_db
 import pandas as pd
@@ -20,6 +21,18 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Google OAuth configuration
+oauth = OAuth(app)
+
+oauth.register(
+    name="google",
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"}
+)
+
 
 auth_db.init_auth_db()
 
@@ -415,11 +428,10 @@ def login_required(view_function):
 def home():
     user_id = session.get("user_id")
 
-    if not user_id or not auth_db.get_user_by_id(user_id):
-        session.clear()
-        return redirect("/login")
+    if user_id and auth_db.get_user_by_id(user_id):
+        return send_from_directory(FRONTEND_DIR, "index.html")
 
-    return send_from_directory(FRONTEND_DIR, "index.html")
+    return send_from_directory(FRONTEND_DIR, "home.html")
 
 
 @app.route("/login")
@@ -1069,6 +1081,61 @@ def current_user():
             "role": user["role"]
         }
     }), 200
+
+
+
+# ================= GOOGLE AUTHENTICATION =================
+
+@app.route("/auth/google")
+def google_login():
+    return oauth.google.authorize_redirect(
+        "https://photograph-organisation-ohio-tennessee.trycloudflare.com/auth/google/callback"
+    )
+
+
+@app.route("/auth/google/callback")
+def google_callback():
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = token.get("userinfo")
+
+        if not user_info:
+            user_info = oauth.google.userinfo(token=token)
+
+        email = str(user_info.get("email", "")).strip().lower()
+        name = str(user_info.get("name", "")).strip()
+        email_verified = user_info.get("email_verified", False)
+
+        if not email or not email_verified:
+            return redirect("/login")
+
+        user = auth_db.get_user_by_email(email)
+
+        if not user:
+            if auth_db.get_setting("registration_open", "0") != "1":
+                return redirect("/login")
+
+            random_password = uuid.uuid4().hex + uuid.uuid4().hex
+            user_id = auth_db.create_user(
+                name or email.split("@")[0],
+                email,
+                random_password,
+                role="user"
+            )
+
+            user = auth_db.get_user_by_id(user_id)
+
+        session.clear()
+        session["user_id"] = user["id"]
+        session["role"] = user["role"]
+
+        return redirect("/")
+
+    except Exception:
+        return redirect("/login")
+
+# ================= END GOOGLE AUTHENTICATION =================
+
 
 # ================= END AUTHENTICATION ROUTES =================
 

@@ -1845,7 +1845,8 @@ function renderCustomerPage() {
         <button onclick="changeCustomerPage(-1)"
             ${currentPage === 1 ? "disabled" : ""}
             style="padding:8px 14px; border:1px solid #cbd5e1;
-                   border-radius:6px; cursor:pointer;">
+                   border-radius:6px; cursor:pointer; color:#ffffff;
+                   background:#263451; font-weight:600;">
             Previous
         </button>
 
@@ -1856,7 +1857,8 @@ function renderCustomerPage() {
         <button onclick="changeCustomerPage(1)"
             ${currentPage === totalPages ? "disabled" : ""}
             style="padding:8px 14px; border:1px solid #cbd5e1;
-                   border-radius:6px; cursor:pointer;">
+                   border-radius:6px; cursor:pointer; color:#ffffff;
+                   background:#263451; font-weight:600;">
             Next
         </button>
     `;
