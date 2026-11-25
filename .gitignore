@@ -29,3 +29,10 @@ index_before_*.html
 /data/metadata/users.db-wal
 /data/metadata/users.db-shm
 /.flask_secret_key
+
+
+# Runtime logs
+/flask.log
+
+# Automatic backend safety backup
+/backend/app.auto_backup.py
