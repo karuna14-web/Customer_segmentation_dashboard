@@ -1088,8 +1088,12 @@ def current_user():
 
 @app.route("/auth/google")
 def google_login():
+    base_url = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+    if not base_url:
+        return redirect("/login")
+
     return oauth.google.authorize_redirect(
-        "https://photograph-organisation-ohio-tennessee.trycloudflare.com/auth/google/callback"
+        base_url + "/auth/google/callback"
     )
 
 
