@@ -36,3 +36,6 @@ index_before_*.html
 
 # Automatic backend safety backup
 /backend/app.auto_backup.py
+
+cloudflare_background.log
+flask_background.log
