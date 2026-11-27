@@ -1110,6 +1110,9 @@ def google_callback():
         name = str(user_info.get("name", "")).strip()
         email_verified = user_info.get("email_verified", False)
 
+        print("GOOGLE EMAIL EXISTS:", bool(email))
+        print("GOOGLE EMAIL VERIFIED:", repr(email_verified))
+
         if not email or not email_verified:
             return redirect("/login")
 
