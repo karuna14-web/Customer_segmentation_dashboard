@@ -1089,8 +1089,7 @@ def current_user():
 @app.route("/auth/google")
 def google_login():
     base_url = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
-    if not base_url:
-        return redirect("/login")
+    print("GOOGLE BASE URL:", repr(base_url))
 
     return oauth.google.authorize_redirect(
         base_url + "/auth/google/callback"
