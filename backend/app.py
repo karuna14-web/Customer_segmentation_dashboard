@@ -1133,13 +1133,11 @@ def google_callback():
         session["user_id"] = user["id"]
         session["role"] = user["role"]
 
-               return redirect("/")
-        except Exception as e:
-            print("GOOGLE OAUTH ERROR:", repr(e))
-            return redirect("/login")
+        return redirect("/")
 
-     
-
+    except Exception as e:
+        print("GOOGLE OAUTH ERROR:", repr(e))
+        return redirect("/login")
 # ================= END GOOGLE AUTHENTICATION =================
 
 
