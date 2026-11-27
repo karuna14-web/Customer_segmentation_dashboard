@@ -1096,7 +1096,6 @@ def google_login():
         base_url + "/auth/google/callback"
     )
 
-
 @app.route("/auth/google/callback")
 def google_callback():
     try:
@@ -1116,8 +1115,8 @@ def google_callback():
         if not email or not email_verified:
             return redirect("/login")
 
-       user = auth_db.get_user_by_email(email)
-       print("GOOGLE USER FOUND:", bool(user))
+        user = auth_db.get_user_by_email(email)
+        print("GOOGLE USER FOUND:", bool(user))
 
         if not user:
             registration_open = auth_db.get_setting("registration_open", "0")
@@ -1127,6 +1126,7 @@ def google_callback():
                 return redirect("/login")
 
             random_password = uuid.uuid4().hex + uuid.uuid4().hex
+
             user_id = auth_db.create_user(
                 name or email.split("@")[0],
                 email,
@@ -1145,6 +1145,8 @@ def google_callback():
     except Exception as e:
         print("GOOGLE OAUTH ERROR:", repr(e))
         return redirect("/login")
+
+
 # ================= END GOOGLE AUTHENTICATION =================
 
 
