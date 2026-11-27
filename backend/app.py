@@ -36,7 +36,7 @@ oauth.register(
 
 
 auth_db.init_auth_db()
-auth_db.set_setting("registration_open", "1")
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = BASE_DIR / "data" / "processed" / "cleaned_data.csv"
