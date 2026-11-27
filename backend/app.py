@@ -1135,7 +1135,8 @@ def google_callback():
 
         return redirect("/")
 
-    except Exception:
+      except Exception as e:
+        print("GOOGLE OAUTH ERROR:", repr(e))
         return redirect("/login")
 
 # ================= END GOOGLE AUTHENTICATION =================
