@@ -17,7 +17,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 app = Flask(__name__)
-pp.config["SERVER_NAME"] = "segmentiq-p479.onrender.com"
+app.config["SERVER_NAME"] = "segmentiq-p479.onrender.com"
 
 app.config["SECRET_KEY"] = os.environ["FLASK_SECRET_KEY"]
 app.config["SESSION_COOKIE_HTTPONLY"] = True
