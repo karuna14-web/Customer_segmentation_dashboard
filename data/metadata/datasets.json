@@ -1,0 +1,20 @@
+{
+    "datasets": [
+        {
+            "id": "online_retail",
+            "name": "Online Retail",
+            "path": "data/processed/cleaned_data.csv",
+            "type": "original",
+            "currency": "GBP",
+            "mapping": {
+                "customer_id": "CustomerID",
+                "invoice_id": "InvoiceNo",
+                "invoice_date": "InvoiceDate",
+                "quantity": "Quantity",
+                "unit_price": "UnitPrice",
+                "revenue": "Revenue"
+            }
+        }
+    ],
+    "active_dataset": "online_retail"
+}
